@@ -1,7 +1,7 @@
-# website:   http://www.brooklyn.health
+# website:   https://www.brooklyn.health
 
 # import the required packages
-from willisapi_client.services.credentials import (
+from willisapi_client.services.auth import (
     login,
     create_user
 )
