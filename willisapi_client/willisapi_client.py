@@ -15,11 +15,22 @@ class WillisapiClient():
         self.api_version = math.floor(self.client_version)
         self.api_uri = "api.brooklyn.health"
         self.env = kwargs['env'] if 'env' in kwargs else None
+        # uncomment self.env = 'dev' while development
+        # self.env = 'dev' 
+    
+    def get_base_url(self):
+        if self.env:
+            return f"https://{self.env}-{self.api_uri}/v{self.api_version}/"
+        return f"https://{self.api_uri}/v{self.api_version}/"
     
     def get_login_url(self):
-        if self.env:
-            return f"https://{self.env}-{self.api_uri}/v{self.api_version}/login"
-        return f"https://{self.api_uri}/v{self.api_version}/login"
+        return self.get_base_url() + "login"
     
-    def get_login_headers(self):
-        return {'Content-Type': 'application/json'}
+    def get_signup_url(self):
+        return self.get_base_url() + "signup"
+    
+    def get_upload_url(self):
+        return self.get_base_url() + "upload"
+    
+    def get_headers(self):
+        return {'Content-Type': 'application/json', 'Accept': 'application/json'}

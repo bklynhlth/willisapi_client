@@ -1,7 +1,10 @@
 # website:   https://www.brooklyn.health
-import pandas as pd
+from http import HTTPStatus
 
-def create_user(key, username, group):
+from willisapi_client.willisapi_client import WillisapiClient
+from willisapi_client.services.auth.auth_utils import AuthUtils
+
+def create_user(key: str, client_email: str , client_name: str) -> str:
     """
     ---------------------------------------------------------------------------------------------------
 
@@ -19,22 +22,20 @@ def create_user(key, username, group):
     Returns:
     ............
     status : str
-        Onboard succes/fail
+        Onboard succes/fail message
 
     ---------------------------------------------------------------------------------------------------
     """
 
-    # SIGNUP_URL = f"{BASE_URL}/signup"
-    # headers = {
-    #     'Authorization': id_token,
-    #     'Content-Type': 'application/json'
-    # }
-    # data = {
-    #     "client_email": client_email,
-    #     "client_name": client_name
-    # }
-    # data = json.dumps(data)
-    # res = requests.post(SIGNUP_URL, json=data, headers=headers).json()
-    c = 1 + 1
-    d = 1 + 2
-    return c, d
+    wc = WillisapiClient()
+    url = wc.get_signup_url()
+    headers = wc.get_headers()
+    headers['Authorization'] = key
+    data = dict(client_email=client_email, client_name=client_name)
+    response = AuthUtils.signup(url, data, headers, try_number=1)
+    if response and 'status_code' in response and response['status_code'] == HTTPStatus.OK:
+        print(f"Signup Successful for client: {client_name}, client_email: {client_email}")
+        return response['message']
+    else:
+        print(f"Signup Failed")
+        return None

@@ -28,10 +28,10 @@ def login(username: str, password: str) -> Tuple[str, int]:
 
     ---------------------------------------------------------------------------------------------------
     """
-    wc = WillisapiClient(env='dev')
+    wc = WillisapiClient()
     url = wc.get_login_url()
+    headers = wc.get_headers()
     data = dict(username=username, password=password)
-    headers = wc.get_login_headers()
     response = AuthUtils.login(url, data, headers, try_number=1)
     if response and 'status_code' in response and response['status_code'] == HTTPStatus.OK:
         print("Login Successful; Key acquired")
