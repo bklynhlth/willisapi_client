@@ -1,0 +1,2 @@
+class UnableToLoginClientError(Exception):
+    pass
