@@ -41,7 +41,7 @@ def upload(key, data):
         for index, row in dataframe.iterrows():
             if csv.validate_row(row):
                 uploaded = UploadUtils.upload(row, url, headers)
-                print(f"{100 * (index+1)/len(dataframe)}%")
+                print(f"progress - {100 * (index+1)/len(dataframe)}%")
                 if uploaded:
                     summary.append([row.file_path, "success"])
                 else:
