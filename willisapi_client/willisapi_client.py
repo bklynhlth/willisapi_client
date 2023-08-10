@@ -32,5 +32,8 @@ class WillisapiClient():
     def get_upload_url(self):
         return self.get_base_url() + "upload"
     
+    def get_download_url(self):
+        return self.get_base_url() + "download"
+    
     def get_headers(self):
         return {'Content-Type': 'application/json', 'Accept': 'application/json'}
