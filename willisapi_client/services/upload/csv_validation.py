@@ -5,6 +5,7 @@ import pathlib
 import re
 
 from willisapi_client.services.exceptions import InvalidFileType, InvalidFilePath, InvalidCSVColumns
+from willisapi_client.logging_setup import logger as logger
 
 class CSVValidation():
     def __init__(self, file_path: str):
@@ -29,13 +30,13 @@ class CSVValidation():
     
     def _is_valid(self):
         if not self._is_file(self.file_path):
-            print("Input is not a file")
+            logger.error("Input is not a file")
             return False
         if not self._is_valid_file_ext(self.file_path):
-            print("Invalid CSV input")
+            logger.error("Invalid CSV input")
             return False
         if not self._is_valid_headers(self.file_path):
-            print("Invalid File Headers")
+            logger.error("Invalid File Headers")
             return False
         return True
     

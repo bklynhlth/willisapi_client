@@ -7,6 +7,7 @@ from datetime import datetime
 from willisapi_client.willisapi_client import WillisapiClient
 from willisapi_client.services.upload.csv_validation import CSVValidation
 from willisapi_client.services.upload.upload_utils import UploadUtils
+from willisapi_client.logging_setup import logger as logger
 
 def upload(key, data):
     """
@@ -30,22 +31,22 @@ def upload(key, data):
     """
     csv = CSVValidation(file_path=data)
     if csv._is_valid():
-        print(f'{datetime.now().strftime("%H:%M:%S")}: CSV check passed')
+        logger.info(f'{datetime.now().strftime("%H:%M:%S")}: CSV check passed')
         dataframe = csv.df
         wc = WillisapiClient()
         url = wc.get_upload_url()
         headers = wc.get_headers()
         headers['Authorization'] = key
         summary = []
-        print(f'{datetime.now().strftime("%H:%M:%S")}: Beginning upload for metadata CSV {data}\n')
+        logger.info(f'{datetime.now().strftime("%H:%M:%S")}: Beginning upload for metadata CSV {data}\n')
         for index, row in dataframe.iterrows():
             if csv.validate_row(row):
                 uploaded = UploadUtils.upload(row, url, headers)
-                print(f"progress - {100 * (index+1)/len(dataframe)}%")
+                logger.info(f"progress - {100 * (index+1)/len(dataframe)}%")
                 if uploaded:
                     summary.append([row.file_path, "success"])
                 else:
                     summary.append([row.file_path, "fail"])
             else:
-                print(f"Data Validation failed for row {row.tolist()}")
+                logger.error(f"Data Validation failed for row {row.tolist()}")
         return pd.DataFrame(summary, columns=['Filename', 'Update Status'])
