@@ -4,13 +4,9 @@ import pathlib
 import requests
 from http import HTTPStatus
 import asyncio
-import copy
 import aiohttp
+import nest_asyncio
 import json
-from itertools import zip_longest
-import time
-
-from typing import List, Mapping
 
 from willisapi_client.services.upload.utils import MB
 from willisapi_client.logging_setup import logger as logger
@@ -110,7 +106,7 @@ class UploadUtils:
                     res = requests.post(f"{url}?type=complete&record_id={record_id}&upload_id={upload_id}&number_of_parts={number_of_parts}", json=parts, headers=headers)
                 else:
                     file = UploadUtils.read_file(row.file_path)
-                    parts = asyncio.run(UploadUtils.async_upload(presigned_urls, file))                
+                    parts = UploadUtils.start_upload(presigned_urls, file)           
                     UploadUtils.close_file(file)
                     parts = json.dumps(parts)
                     res = requests.post(f"{url}?type=complete&record_id={record_id}&upload_id={upload_id}&number_of_parts={number_of_parts}", json=parts, headers=headers)
@@ -120,6 +116,20 @@ class UploadUtils:
                         uploaded = True
         return uploaded
     
+    def start_upload(presigned_urls, file):
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:  # 'RuntimeError: There is no current event loop...'
+            loop = None
+        
+        if loop and loop.is_running():
+            nest_asyncio.apply()
+            parts = asyncio.run(UploadUtils.async_upload(presigned_urls, file))
+        else:
+            parts = asyncio.run(UploadUtils.async_upload(presigned_urls, file)) 
+        
+        return parts
+
     def summary_logs(number_of_files_uploaded: int, number_of_files_failed: int):
         logger.info("---------------------------------------")
         logger.info("upload summary")
