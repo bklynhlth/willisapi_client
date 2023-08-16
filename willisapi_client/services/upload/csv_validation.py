@@ -11,7 +11,13 @@ from willisapi_client.logging_setup import logger as logger
 class CSVValidation():
     def __init__(self, file_path: str):
         self.expected_file_ext = 'csv'
-        self.expected_headers = {'project_name', 'file_path', 'workflow_tags', 'pt_id_external', 'time_collected', 'data_type'}
+        self.project_name = 'project_name'
+        self.file_path = 'file_path'
+        self.workflow_tags = 'workflow_tags'
+        self.pt_id_external = 'pt_id_external'
+        self.time_collected = 'time_collected'
+        self.data_type = 'data_type'
+        self.expected_headers = {self.project_name, self.file_path, self.workflow_tags, self.pt_id_external, self.time_collected, self.data_type}
         self.workflow_tags  = [
                                 'vocal_acoustics',
                                 'speech_characteristics',
@@ -28,6 +34,7 @@ class CSVValidation():
         self.collect_time_format = r'^\d{4}-\d{2}-\d{2}$'
         self.file_path = file_path
         self.df = None
+        self.invalid_csv = "invalid csv input"
     
     def _is_valid(self) -> bool:
         """
@@ -37,13 +44,13 @@ class CSVValidation():
             boolean
         """
         if not self._is_file(self.file_path):
-            logger.error("Invalid CSV input")
+            logger.error(self.invalid_csv)
             return False
         if not self._is_valid_file_ext(self.file_path):
-            logger.error("Invalid CSV input")
+            logger.error(self.invalid_csv)
             return False
         if not self._is_valid_headers(self.file_path):
-            logger.error("Invalid CSV input")
+            logger.error(self.invalid_csv)
             return False
         return True
     
@@ -100,7 +107,7 @@ class CSVValidation():
         """
         if name:
             return True, None
-        return False, "Invalid Project Name"
+        return False, f"Invalid {self.project_name} formatting"
     
     def _is_file_path_valid(self, file_path: str) -> Tuple[bool, str]:
         """
@@ -113,7 +120,7 @@ class CSVValidation():
         """
         if file_path and os.path.exists(file_path) and os.path.isfile(file_path):
             return True, None
-        return False, "Invalid File Path"
+        return False, f"Invalid {self.file_path} formatting"
 
     def _is_workflow_tags_valid(self, workflow_tags: str) -> Tuple[bool, str]:
         """
@@ -127,7 +134,7 @@ class CSVValidation():
         tags = workflow_tags.split(",")
         if set(tags).issubset(set(self.workflow_tags)):
             return True, None
-        return False, "Invalid Workflow Tags"
+        return False, f"Invalid {self.workflow_tags} formatting"
     
     def _is_pt_id_external_valid(self, pt_id_ext: str) -> Tuple[bool, str]:
         """
@@ -140,7 +147,7 @@ class CSVValidation():
         """
         if pt_id_ext:
             return True, None
-        return False, "Invalid pt_id_external"
+        return False, f"Invalid {self.pt_id_external} formatting"
     
     def _is_time_collected_valid(self, collect_time: str) -> Tuple[bool, str]:
         """
@@ -155,7 +162,7 @@ class CSVValidation():
             return True, None
         if collect_time and bool(re.match(self.collect_time_format, collect_time)):
             return True, None
-        return False, "Invalid time_collected"
+        return False, f"Invalid {self.time_collected} formatting"
     
     def _is_data_type_valid(self, data_type: str) -> Tuple[bool, str]:
         """
@@ -168,7 +175,7 @@ class CSVValidation():
         """
         if data_type == None or data_type:
             return True, None
-        return False, "Invalid data type"
+        return False, f"Invalid {self.data_type} formatting"
 
     def validate_row(self, row) -> Tuple[bool, str]:
         """

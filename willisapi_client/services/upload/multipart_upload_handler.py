@@ -32,14 +32,14 @@ def upload(key, data):
     """
     csv = CSVValidation(file_path=data)
     if csv._is_valid():
-        logger.info(f'{datetime.now().strftime("%H:%M:%S")}: CSV check passed')
+        logger.info(f'{datetime.now().strftime("%H:%M:%S")}: csv check passed')
         dataframe = csv.df
         wc = WillisapiClient()
         url = wc.get_upload_url()
         headers = wc.get_headers()
         headers['Authorization'] = key
         summary = []
-        logger.info(f'{datetime.now().strftime("%H:%M:%S")}: Beginning upload for metadata CSV {data}\n')
+        logger.info(f'{datetime.now().strftime("%H:%M:%S")}: beginning upload')
         for index, row in tqdm(dataframe.iterrows(), total=dataframe.shape[0]):
             (is_valid_row, error) = csv.validate_row(row)
             if is_valid_row:
@@ -51,7 +51,7 @@ def upload(key, data):
             else:
                 summary.append([row.file_path, "fail", error])
 
-        res_df = pd.DataFrame(summary, columns=['Filename', 'Update Status', 'Upload Message'])
+        res_df = pd.DataFrame(summary, columns=['filename', 'upload_status', 'upload_message'])
         number_of_files_uploaded = len(res_df[res_df['Update Status']=="success"])
         number_of_files_failed = len(res_df[res_df['Update Status']=="fail"])
         UploadUtils.summary_logs(number_of_files_uploaded, number_of_files_failed)
