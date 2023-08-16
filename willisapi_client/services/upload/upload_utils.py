@@ -114,6 +114,7 @@ class UploadUtils:
                     parts = json.dumps(parts)
                     res = requests.post(f"{url}?type=complete&record_id={record_id}&upload_id={upload_id}&number_of_parts={number_of_parts}", json=parts, headers=headers)
                     res_json = res.json()
+                    #TODO: use status_code instead of filename
                     if "filename" in res_json and res_json["filename"]:
                         uploaded = True
         return uploaded
