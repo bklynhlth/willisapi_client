@@ -3,6 +3,7 @@ import numpy as np
 import os
 import pathlib
 import re
+from typing import Tuple
 
 from willisapi_client.services.exceptions import InvalidFileType, InvalidFilePath, InvalidCSVColumns
 from willisapi_client.logging_setup import logger as logger
@@ -36,13 +37,13 @@ class CSVValidation():
             boolean
         """
         if not self._is_file(self.file_path):
-            logger.error("Input is not a file")
+            logger.error("Invalid CSV input")
             return False
         if not self._is_valid_file_ext(self.file_path):
             logger.error("Invalid CSV input")
             return False
         if not self._is_valid_headers(self.file_path):
-            logger.error("Invalid File Headers")
+            logger.error("Invalid CSV input")
             return False
         return True
     
@@ -88,102 +89,115 @@ class CSVValidation():
             return True
         return False
 
-    def _is_project_name_valid(self, name: str) -> bool:
+    def _is_project_name_valid(self, name: str) -> Tuple[bool, str]:
         """
         Check if project_name is not empty
 
         Parameters:
             name: project name
         Returns:
-            boolean
+            boolean, str
         """
         if name:
-            return True
-        return False
+            return True, None
+        return False, "Invalid Project Name"
     
-    def _is_file_path_valid(self, file_path: str) -> bool:
+    def _is_file_path_valid(self, file_path: str) -> Tuple[bool, str]:
         """
         Check if file path is not valid
 
         Parameters:
             file_path: A string of file path
         Returns:
-            boolean
+            boolean, str
         """
         if file_path and os.path.exists(file_path) and os.path.isfile(file_path):
-            return True
-        return False
+            return True, None
+        return False, "Invalid File Path"
 
-    def _is_workflow_tags_valid(self, workflow_tags: str) -> bool:
+    def _is_workflow_tags_valid(self, workflow_tags: str) -> Tuple[bool, str]:
         """
         Check if workflow tags are valid
 
         Parameters:
             workflow_tags: A comma separated string of workflow tags
         Returns:
-            boolean
+            boolean, str
         """
         tags = workflow_tags.split(",")
         if set(tags).issubset(set(self.workflow_tags)):
-            return True
-        return False
+            return True, None
+        return False, "Invalid Workflow Tags"
     
-    def _is_pt_id_external_valid(self, pt_id_ext: str) -> bool:
+    def _is_pt_id_external_valid(self, pt_id_ext: str) -> Tuple[bool, str]:
         """
         Check if pt_id_external is not empty
 
         Parameters:
             pt_id_ext: A string to pt_id_external
         Returns:
-            boolean
+            boolean, str
         """
         if pt_id_ext:
-            return True
-        return False
+            return True, None
+        return False, "Invalid pt_id_external"
     
-    def _is_time_collected_valid(self, collect_time: str) -> bool:
+    def _is_time_collected_valid(self, collect_time: str) -> Tuple[bool, str]:
         """
         Check if collect_time is valid
 
         Parameters:
             collect_time: A string to collect_time (YYYY-MM-DD)
         Returns:
-            boolean
+            boolean, str
         """
         if collect_time == None:
-            return True
+            return True, None
         if collect_time and bool(re.match(self.collect_time_format, collect_time)):
-            return True
-        return False
+            return True, None
+        return False, "Invalid time_collected"
     
-    def _is_data_type_valid(self, data_type: str) -> bool:
+    def _is_data_type_valid(self, data_type: str) -> Tuple[bool, str]:
         """
         Check if data type is valid
 
         Parameters:
             data_type: A string representation of data types
         Returns:
-            boolean
+            boolean, str
         """
         if data_type == None or data_type:
-            return True
-        return False
+            return True, None
+        return False, "Invalid data type"
 
-    def validate_row(self, row) -> bool:
+    def validate_row(self, row) -> Tuple[bool, str]:
         """
         This function validates a row of a dataframe
 
         Parameters:
             row: this is row of a dataframe
         Returns:
-            boolean
+            boolean, str
         """
-        return (self._is_project_name_valid(row.project_name) and
-        self._is_file_path_valid(row.file_path) and
-        self._is_workflow_tags_valid(row.workflow_tags) and 
-        self._is_pt_id_external_valid(row.pt_id_external) and 
-        self._is_time_collected_valid(row.time_collected) and
-        self._is_data_type_valid(row.data_type))
+        is_valid_project, error = self._is_project_name_valid(row.project_name)
+        if error: return (is_valid_project, error) 
+
+        is_valid_file, error = self._is_file_path_valid(row.file_path) 
+        if error: return (is_valid_file, error)
+        
+        is_valid_wft, error = self._is_workflow_tags_valid(row.workflow_tags)
+        if error: return (is_valid_wft, error)
+        
+        is_valid_pt_id, error = self._is_pt_id_external_valid(row.pt_id_external)
+        if error: return (is_valid_pt_id, error)
+        
+        is_valid_collect_time, error = self._is_time_collected_valid(row.time_collected)
+        if error: return (is_valid_collect_time, error)
+        
+        is_valid_datatype, error = self._is_data_type_valid(row.data_type)
+        if error: return (is_valid_datatype, error)
+        
+        return True, None
 
     def get_filename(self, file_path: str) -> str:
         """
