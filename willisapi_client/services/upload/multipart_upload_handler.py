@@ -41,16 +41,17 @@ def upload(key, data):
         summary = []
         logger.info(f'{datetime.now().strftime("%H:%M:%S")}: Beginning upload for metadata CSV {data}\n')
         for index, row in tqdm(dataframe.iterrows(), total=dataframe.shape[0]):
-            if csv.validate_row(row):
+            (is_valid_row, error) = csv.validate_row(row)
+            if is_valid_row:
                 uploaded = UploadUtils.upload(index, row, url, headers)
                 if uploaded:
-                    summary.append([row.file_path, "success"])
+                    summary.append([row.file_path, "success", None])
                 else:
-                    summary.append([row.file_path, "fail"])
+                    summary.append([row.file_path, "fail", None])
             else:
-                logger.error(f"Data Validation failed for row {row.tolist()}")
+                summary.append([row.file_path, "fail", error])
 
-        res_df = pd.DataFrame(summary, columns=['Filename', 'Update Status'])
+        res_df = pd.DataFrame(summary, columns=['Filename', 'Update Status', 'Upload Message'])
         number_of_files_uploaded = len(res_df[res_df['Update Status']=="success"])
         number_of_files_failed = len(res_df[res_df['Update Status']=="fail"])
         UploadUtils.summary_logs(number_of_files_uploaded, number_of_files_failed)
