@@ -4,6 +4,7 @@ from http import HTTPStatus
 
 from willisapi_client.willisapi_client import WillisapiClient
 from willisapi_client.services.download.download_utils import DownloadUtils
+from willisapi_client.logging_setup import logger as logger
 
 def download(key: str, project_name: str):
     """
@@ -20,7 +21,7 @@ def download(key: str, project_name: str):
 
     Returns:
     ............
-    summary : pandas Dataframe
+    summary : json
         download summary
 
     ---------------------------------------------------------------------------------------------------
@@ -31,4 +32,12 @@ def download(key: str, project_name: str):
     headers = wc.get_headers()
     headers['Authorization'] = key
     response = DownloadUtils.request(url, headers, try_number=1)
-    return response
+    if "status_code" in response:
+        if response["status_code"] == HTTPStatus.FORBIDDEN:
+            logger.error("Invalid key")
+        if response["status_code"] == HTTPStatus.UNAUTHORIZED:
+            logger.error("No access to project/data for download.")
+        if response["status_code"] == HTTPStatus.OK:
+            return response["items"]
+    else:
+        return {}

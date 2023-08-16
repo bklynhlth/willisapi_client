@@ -1,14 +1,15 @@
 # website:   https://www.brooklyn.health
 import pandas as pd
-import asyncio
-import sys
+from tqdm import tqdm
 from datetime import datetime
 
 from willisapi_client.willisapi_client import WillisapiClient
 from willisapi_client.services.upload.csv_validation import CSVValidation
 from willisapi_client.services.upload.upload_utils import UploadUtils
 from willisapi_client.logging_setup import logger as logger
+from willisapi_client.timer import measure
 
+@measure
 def upload(key, data):
     """
     ---------------------------------------------------------------------------------------------------
@@ -39,14 +40,18 @@ def upload(key, data):
         headers['Authorization'] = key
         summary = []
         logger.info(f'{datetime.now().strftime("%H:%M:%S")}: Beginning upload for metadata CSV {data}\n')
-        for index, row in dataframe.iterrows():
+        for _, row in tqdm(dataframe.iterrows(), total=dataframe.shape[0]):
             if csv.validate_row(row):
                 uploaded = UploadUtils.upload(row, url, headers)
-                logger.info(f"progress - {100 * (index+1)/len(dataframe)}%")
                 if uploaded:
                     summary.append([row.file_path, "success"])
                 else:
                     summary.append([row.file_path, "fail"])
             else:
                 logger.error(f"Data Validation failed for row {row.tolist()}")
-        return pd.DataFrame(summary, columns=['Filename', 'Update Status'])
+
+        res_df = pd.DataFrame(summary, columns=['Filename', 'Update Status'])
+        number_of_files_uploaded = len(res_df[res_df['Update Status']=="success"])
+        number_of_files_failed = len(res_df[res_df['Update Status']=="fail"])
+        UploadUtils.summary_logs(number_of_files_uploaded, number_of_files_failed)
+        return res_df
