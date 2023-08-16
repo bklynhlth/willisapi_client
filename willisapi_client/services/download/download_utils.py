@@ -5,6 +5,12 @@ import random
 
 class DownloadUtils:
     def request(url, headers, try_number):
+        """
+        This is an internal download function which makes a GET API call to brooklyn.health API server
+
+        Returns:
+            json
+        """
         try:
             response = requests.get(url, headers=headers)
             res_json = response.json()

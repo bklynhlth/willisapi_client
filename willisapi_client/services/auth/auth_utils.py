@@ -11,6 +11,12 @@ from willisapi_client.services.exceptions import (
 class AuthUtils:
     @staticmethod
     def login(url, data, headers, try_number):
+        """
+        This is an internal login function which makes a POST API call to brooklyn.health API server
+
+        Returns:
+            json
+        """
         try:
             response = requests.post(url, json=data, headers=headers)
             res_json = response.json()
@@ -24,6 +30,12 @@ class AuthUtils:
 
     @staticmethod
     def signup(url, data, headers, try_number):
+        """
+        This is an internal signup function which makes a POST API call to brooklyn.health API server
+
+        Returns:
+            json
+        """
         try:
             response = requests.post(url, json=data, headers=headers)
             res_json = response.json()
