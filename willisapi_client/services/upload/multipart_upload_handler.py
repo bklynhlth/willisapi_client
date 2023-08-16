@@ -52,7 +52,7 @@ def upload(key, data):
                 summary.append([row.file_path, "fail", error])
 
         res_df = pd.DataFrame(summary, columns=['filename', 'upload_status', 'upload_message'])
-        number_of_files_uploaded = len(res_df[res_df['Update Status']=="success"])
-        number_of_files_failed = len(res_df[res_df['Update Status']=="fail"])
+        number_of_files_uploaded = len(res_df[res_df['upload_status']=="success"])
+        number_of_files_failed = len(res_df[res_df['upload_status']=="fail"])
         UploadUtils.summary_logs(number_of_files_uploaded, number_of_files_failed)
         return res_df
