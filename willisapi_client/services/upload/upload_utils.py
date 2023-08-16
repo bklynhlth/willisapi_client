@@ -13,6 +13,7 @@ import time
 from typing import List, Mapping
 
 from willisapi_client.services.upload.utils import MB
+from willisapi_client.logging_setup import logger as logger
 
 # AWS Limit
 MAX_NUMBER_OF_PARTS = 10000
@@ -54,10 +55,10 @@ class UploadUtils:
                 if res_json["status_code"] == HTTPStatus.OK:
                     return (res_json["upload_id"], res_json["record_id"])
                 if res_json["status_code"] == HTTPStatus.BAD_REQUEST or res_json["status_code"] == HTTPStatus.INTERNAL_SERVER_ERROR:
-                    print("Something went wrong")
+                    logger.error("Something went wrong")
             else:
                 if 'message' in res_json and res_json['message'] == 'Unauthorized':
-                    print("Your Key is expired. Login again to generate a new key")                
+                    logger.error("Your Key is expired. Login again to generate a new key")                
             return (None, None)
     
     def fetch_pre_signed_part_urls(url: str, record_id: str, upload_id: str, file_path: str, headers):
@@ -74,7 +75,7 @@ class UploadUtils:
                     return res_json["presigned_url"], number_of_parts
             else:
                 if 'message' in res_json and res_json['message'] == 'Unauthorized':
-                    print("Your Key is expired. Login again to generate a new key")                
+                    logger.error("Your Key is expired. Login again to generate a new key")                
             return None, number_of_parts
 
     async def _async_upload(session, part_no, presigned_url, data, PARTS):
