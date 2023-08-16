@@ -119,3 +119,10 @@ class UploadUtils:
                     if "filename" in res_json and res_json["filename"]:
                         uploaded = True
         return uploaded
+    
+    def summary_logs(number_of_files_uploaded: int, number_of_files_failed: int):
+        logger.info("---------------------------------------")
+        logger.info("upload summary")
+        logger.info("---------------------------------------")
+        logger.info(f"file upload successes: {number_of_files_uploaded}")
+        logger.info(f"file upload failures: {number_of_files_failed}")
