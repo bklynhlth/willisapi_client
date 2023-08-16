@@ -87,7 +87,7 @@ class UploadUtils:
             if "status_code" in res_json:
                 if res_json["status_code"] == HTTPStatus.OK:
                     if index == 0:
-                        logger.info(f'{datetime.now().strftime("%H:%M:%S")}: Key check passed')
+                        logger.info(f'{datetime.now().strftime("%H:%M:%S")}: key check passed')
                     return (res_json["upload_id"], res_json["record_id"])
                 if res_json["status_code"] == HTTPStatus.BAD_REQUEST or res_json["status_code"] == HTTPStatus.INTERNAL_SERVER_ERROR:
                     logger.error("Something went wrong")
