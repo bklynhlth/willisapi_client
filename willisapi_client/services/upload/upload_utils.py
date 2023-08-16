@@ -8,6 +8,7 @@ import aiohttp
 import nest_asyncio
 import json
 from typing import Tuple
+from datetime import datetime
 
 from willisapi_client.services.upload.utils import MB
 from willisapi_client.logging_setup import logger as logger
@@ -59,7 +60,7 @@ class UploadUtils:
         number_of_parts = math.ceil(total_bytes / PART_SIZE)
         return number_of_parts
     
-    def initiate_multi_part_upload(row, url: str, headers: dict) -> Tuple[str, str]:
+    def initiate_multi_part_upload(index: int, row, url: str, headers: dict) -> Tuple[str, str]:
         """
         This is an internal function which makes a POST API call to brooklyn.health API server to initiate multi part upload
 
@@ -85,6 +86,8 @@ class UploadUtils:
         else:
             if "status_code" in res_json:
                 if res_json["status_code"] == HTTPStatus.OK:
+                    if index == 0:
+                        logger.info(f'{datetime.now().strftime("%H:%M:%S")}: Key check passed')
                     return (res_json["upload_id"], res_json["record_id"])
                 if res_json["status_code"] == HTTPStatus.BAD_REQUEST or res_json["status_code"] == HTTPStatus.INTERNAL_SERVER_ERROR:
                     logger.error("Something went wrong")
@@ -151,7 +154,7 @@ class UploadUtils:
         return SORTED_PARTS
 
     @staticmethod
-    def upload(row, url, headers) -> bool:
+    def upload(index, row, url, headers) -> bool:
         """
         This is an internal funciton which first call the initiate_multipart_upload function, then upload the file in async way
         and finally make a POST call to brooklyn.health API server to make the upload as complete/abort
@@ -159,7 +162,7 @@ class UploadUtils:
         Returns:
             uploaded: boolean
         """
-        (upload_id, record_id) = UploadUtils.initiate_multi_part_upload(row, url, headers)
+        (upload_id, record_id) = UploadUtils.initiate_multi_part_upload(index, row, url, headers)
         uploaded = False
         if upload_id and record_id:
             presigned_urls, number_of_parts = UploadUtils.fetch_pre_signed_part_urls(url, record_id, upload_id, row.file_path, headers)

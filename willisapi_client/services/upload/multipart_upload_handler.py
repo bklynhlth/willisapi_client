@@ -40,9 +40,9 @@ def upload(key, data):
         headers['Authorization'] = key
         summary = []
         logger.info(f'{datetime.now().strftime("%H:%M:%S")}: Beginning upload for metadata CSV {data}\n')
-        for _, row in tqdm(dataframe.iterrows(), total=dataframe.shape[0]):
+        for index, row in tqdm(dataframe.iterrows(), total=dataframe.shape[0]):
             if csv.validate_row(row):
-                uploaded = UploadUtils.upload(row, url, headers)
+                uploaded = UploadUtils.upload(index, row, url, headers)
                 if uploaded:
                     summary.append([row.file_path, "success"])
                 else:
