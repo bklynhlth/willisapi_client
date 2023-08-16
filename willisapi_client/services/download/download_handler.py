@@ -5,7 +5,7 @@ from http import HTTPStatus
 from willisapi_client.willisapi_client import WillisapiClient
 from willisapi_client.services.download.download_utils import DownloadUtils
 
-def download(key, project_name):
+def download(key: str, project_name: str):
     """
     ---------------------------------------------------------------------------------------------------
 
@@ -27,13 +27,8 @@ def download(key, project_name):
     """
 
     wc = WillisapiClient()
-    url = wc.get_download_url()
+    url = wc.get_download_url() + f"?project_name={project_name}"
     headers = wc.get_headers()
     headers['Authorization'] = key
-    data = dict(project_name=project_name)
-    response = DownloadUtils.request(url, data, headers, try_number=1)
-    if 'message' in response and response['message'] == 'Unauthorized':
-        print("Your Key is expired. Login again to generate a new key")      
-    if response and 'status_code' in response and response['status_code'] == HTTPStatus.OK:
-        return response['items']    
-    return None
+    response = DownloadUtils.request(url, headers, try_number=1)
+    return response
