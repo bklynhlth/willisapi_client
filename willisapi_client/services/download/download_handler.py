@@ -4,7 +4,9 @@ from http import HTTPStatus
 from willisapi_client.willisapi_client import WillisapiClient
 from willisapi_client.services.download.download_utils import DownloadUtils
 from willisapi_client.logging_setup import logger as logger
+from willisapi_client.timer import measure
 
+@measure
 def download(key: str, project_name: str):
     """
     ---------------------------------------------------------------------------------------------------
@@ -37,6 +39,9 @@ def download(key: str, project_name: str):
         if response["status_code"] == HTTPStatus.UNAUTHORIZED:
             logger.error("No access to project/data for download.")
         if response["status_code"] == HTTPStatus.OK:
-            return response["items"]
+            response_df, err = DownloadUtils.generate_response_df(response)
+            if err:
+                return response
+            return response_df
     else:
         return {}
