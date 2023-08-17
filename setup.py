@@ -1,7 +1,6 @@
 # website:   https://www.brooklyn.health
 
 import setuptools
-import glob
 import os
 
 # Version details

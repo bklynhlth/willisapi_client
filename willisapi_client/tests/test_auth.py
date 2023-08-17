@@ -1,6 +1,3 @@
-import pytest
-from unittest.mock import MagicMock, patch
-
 
 class TestLoginFunction:
     def setup_method(self):

@@ -1,5 +1,4 @@
 # website:   https://www.brooklyn.health
-import pandas as pd
 from http import HTTPStatus
 
 from willisapi_client.willisapi_client import WillisapiClient
