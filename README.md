@@ -13,3 +13,4 @@ json = wc.download(key, 'project_name')
 ## Update env while testing/development
 - path/to/willisapi_client/willisapi_client.py
     - self.env = 'dev'
+    
