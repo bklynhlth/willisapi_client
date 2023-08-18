@@ -52,8 +52,10 @@ class DownloadUtils:
         """
         Get summary dataframe of each workflow tag json data
         """
-        if workflow_tag in response["items"]["project"]["participant"][pt]["results"][rec]["measures"]:
-            return pd.read_json(json.dumps(response["items"]["project"]["participant"][pt]["results"][rec]["measures"][workflow_tag][0]))
+        measures_dict = response["items"]["project"]["participant"][pt]["results"][rec]["measures"]
+        if workflow_tag in measures_dict:
+            if measures_dict[workflow_tag]:
+                return pd.read_json(json.dumps(measures_dict[workflow_tag][0]))
         return pd.DataFrame()
 
     def generate_response_df(response) -> Tuple[pd.DataFrame, str]:
