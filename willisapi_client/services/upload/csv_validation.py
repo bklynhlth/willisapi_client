@@ -10,14 +10,15 @@ from willisapi_client.logging_setup import logger as logger
 
 class CSVValidation():
     def __init__(self, file_path: str):
+        self.file_path = file_path
         self.expected_file_ext = 'csv'
         self.project_name = 'project_name'
-        self.file_path = 'file_path'
-        self.workflow_tags = 'workflow_tags'
+        self.tags = 'workflow_tags'
         self.pt_id_external = 'pt_id_external'
         self.time_collected = 'time_collected'
         self.data_type = 'data_type'
-        self.expected_headers = {self.project_name, self.file_path, self.workflow_tags, self.pt_id_external, self.time_collected, self.data_type}
+        self.upload_file_path = 'file_path'
+        self.expected_headers = {self.project_name, self.upload_file_path, self.tags, self.pt_id_external, self.time_collected, self.data_type}
         self.workflow_tags  = [
                                 'vocal_acoustics',
                                 'speech_characteristics',
@@ -32,7 +33,6 @@ class CSVValidation():
                                 'speech_characteristics_from_json'
                                 ]
         self.collect_time_format = r'^\d{4}-\d{2}-\d{2}$'
-        self.file_path = file_path
         self.df = None
         self.invalid_csv = "invalid csv input"
     
@@ -43,52 +43,46 @@ class CSVValidation():
         Returns:
             boolean
         """
-        if not self._is_file(self.file_path):
+        if not self._is_file():
             logger.error(self.invalid_csv)
             return False
-        if not self._is_valid_file_ext(self.file_path):
+        if not self._is_valid_file_ext():
             logger.error(self.invalid_csv)
             return False
-        if not self._is_valid_headers(self.file_path):
+        if not self._is_valid_headers():
             logger.error(self.invalid_csv)
             return False
         return True
     
-    def _is_file(self, file_path: str) -> bool:
+    def _is_file(self) -> bool:
         """
         Check if input is a file
 
-        Parameters:
-            file_path: A string of file path
         Returns:
             boolean
         """
-        return os.path.exists(file_path) and os.path.isfile(file_path)
+        return os.path.exists(self.file_path) and os.path.isfile(self.file_path)
 
-    def _is_valid_file_ext(self, file_path: str) -> bool:
+    def _is_valid_file_ext(self) -> bool:
         """
         Check if input is a valid CSV file
 
-        Parameters:
-            file_path: A string of file path
         Returns:
             boolean
         """
-        file_ext = file_path.split(".")[-1]
+        file_ext = self.file_path.split(".")[-1]
         if file_ext == self.expected_file_ext:
             return True
         return False
             
-    def _is_valid_headers(self, file_path: str) -> bool:
+    def _is_valid_headers(self) -> bool:
         """
         Check if input CSV has valid headers
 
-        Parameters:
-            file_path: A string of file path
         Returns:
             boolean
         """
-        df = pd.read_csv(file_path)
+        df = pd.read_csv(self.file_path)
         df = df.replace({np.nan: None})
         headers = set(df.columns)
         if headers == self.expected_headers:
@@ -120,7 +114,7 @@ class CSVValidation():
         """
         if file_path and os.path.exists(file_path) and os.path.isfile(file_path):
             return True, None
-        return False, f"Invalid {self.file_path} formatting"
+        return False, f"Invalid {file_path} formatting"
 
     def _is_workflow_tags_valid(self, workflow_tags: str) -> Tuple[bool, str]:
         """
@@ -134,7 +128,7 @@ class CSVValidation():
         tags = workflow_tags.split(",")
         if set(tags).issubset(set(self.workflow_tags)):
             return True, None
-        return False, f"Invalid {self.workflow_tags} formatting"
+        return False, f"Invalid {self.tags} formatting"
     
     def _is_pt_id_external_valid(self, pt_id_ext: str) -> Tuple[bool, str]:
         """
@@ -173,7 +167,7 @@ class CSVValidation():
         Returns:
             boolean, str
         """
-        if data_type == None or data_type:
+        if data_type in [None, ""] or data_type:
             return True, None
         return False, f"Invalid {self.data_type} formatting"
 
@@ -186,27 +180,27 @@ class CSVValidation():
         Returns:
             boolean, str
         """
-        is_valid_project, error = self._is_project_name_valid(row.project_name)
-        if error: return (is_valid_project, error) 
+        is_valid_project, error = self._is_project_name_valid(row[self.project_name])
+        if error: return (is_valid_project, error)
 
-        is_valid_file, error = self._is_file_path_valid(row.file_path) 
+        is_valid_file, error = self._is_file_path_valid(row[self.upload_file_path]) 
         if error: return (is_valid_file, error)
         
-        is_valid_wft, error = self._is_workflow_tags_valid(row.workflow_tags)
+        is_valid_wft, error = self._is_workflow_tags_valid(row[self.tags])
         if error: return (is_valid_wft, error)
         
-        is_valid_pt_id, error = self._is_pt_id_external_valid(row.pt_id_external)
+        is_valid_pt_id, error = self._is_pt_id_external_valid(row[self.pt_id_external])
         if error: return (is_valid_pt_id, error)
         
-        is_valid_collect_time, error = self._is_time_collected_valid(row.time_collected)
+        is_valid_collect_time, error = self._is_time_collected_valid(row[self.time_collected])
         if error: return (is_valid_collect_time, error)
         
-        is_valid_datatype, error = self._is_data_type_valid(row.data_type)
+        is_valid_datatype, error = self._is_data_type_valid(row[self.data_type])
         if error: return (is_valid_datatype, error)
         
         return True, None
 
-    def get_filename(self, file_path: str) -> str:
+    def get_filename(self) -> str:
         """
         This function returns the name of the file
 
@@ -215,4 +209,4 @@ class CSVValidation():
         Returns:
             str
         """
-        return pathlib.Path(file_path).name
+        return pathlib.Path(self.file_path).name
