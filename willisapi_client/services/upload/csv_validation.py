@@ -210,3 +210,6 @@ class CSVValidation():
             str
         """
         return pathlib.Path(self.file_path).name
+
+    def get_dataframe(self):
+        return self.df
