@@ -65,7 +65,7 @@ class DownloadUtils:
         response_df = pd.DataFrame()
         try:
             if not response["items"]:
-                return response_df
+                return response_df, "No Data Found"
             (project_name, num_pts) = DownloadUtils._get_project_name_and_pts_count(response)
             for pt in range(0, num_pts):
                 (pt_id_ext, num_records) = DownloadUtils._get_pt_id_ext_and_num_records(response, pt)
