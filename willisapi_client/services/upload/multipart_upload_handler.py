@@ -33,7 +33,7 @@ def upload(key, data):
     csv = CSVValidation(file_path=data)
     if csv._is_valid():
         logger.info(f'{datetime.now().strftime("%H:%M:%S")}: csv check passed')
-        dataframe = csv.df
+        dataframe = csv.get_dataframe()
         wc = WillisapiClient()
         url = wc.get_upload_url()
         headers = wc.get_headers()

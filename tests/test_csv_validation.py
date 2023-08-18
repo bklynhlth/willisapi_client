@@ -1,7 +1,6 @@
 from willisapi_client.services.upload.csv_validation import CSVValidation
 
 from unittest.mock import patch
-import pandas as pd
 
 class TestCSVValidation:
     def test_directory(self):
@@ -34,7 +33,7 @@ class TestCSVValidation:
         mocked_headers.return_value = True
         mocked_file.return_value = True
         mocked_upload_file.return_value = (True, "")
-        csv = CSVValidation(file_path="/metadata.csv")
+        csv = CSVValidation(file_path="/data.csv")
         assert csv._is_valid() == True
         row = {
             "project_name": "project_name",
