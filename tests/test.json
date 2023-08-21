@@ -1,0 +1,56 @@
+{
+    "items": {
+        "account_Id": "Account",
+        "account_name": "Account",
+        "project": {
+            "project_Id": "project",
+            "project_name": "project_name",
+            "participant": [
+                {
+                    "participant_Id": "pt_id_external",
+                    "results": [
+                        {
+                            "file_name": "test_video.mp4",
+                            "file_type": null,
+                            "timestamp": null,
+                            "measures": {
+                                "emotional_expressivity_summary": [
+                                    {
+                                        "stats": [
+                                            "mean"
+                                        ]
+                                    }
+                                ],
+                                "facial_expressivity_summary": [
+                                    {
+                                        "stats": [
+                                            "mean"
+                                        ],
+                                        "overall": [
+                                            0.0004208907
+                                        ]
+                                    }
+                                ],
+                                "speech_characteristics_summary": [
+                                    {
+                                        "speech_length_minutes": [],
+                                        "speech_length_words": []
+                                    }
+                                ],
+                                "vocal_acoustic_summary": [
+                                    {
+                                        "f0_mean": [],
+                                        "f0_stdev": []
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    "status": "success",
+    "message": "Data download successfully",
+    "status_code": 200
+}
