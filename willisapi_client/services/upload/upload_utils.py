@@ -26,7 +26,11 @@ class UploadUtils:
         Returns:
             int
         """
-        return asyncio.Semaphore(os.cpu_count() - 2)
+        total_cpu_count = os.cpu_count()
+        semaphore_count = total_cpu_count - 2
+        if semaphore_count <= 0:
+            semaphore_count = total_cpu_count 
+        return asyncio.Semaphore(semaphore_count)
     
     @staticmethod
     def read_file(file_path: str):
