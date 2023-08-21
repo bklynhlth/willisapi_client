@@ -16,9 +16,8 @@ class CSVValidation():
         self.tags = 'workflow_tags'
         self.pt_id_external = 'pt_id_external'
         self.time_collected = 'time_collected'
-        self.data_type = 'data_type'
         self.upload_file_path = 'file_path'
-        self.expected_headers = {self.project_name, self.upload_file_path, self.tags, self.pt_id_external, self.time_collected, self.data_type}
+        self.expected_headers = {self.project_name, self.upload_file_path, self.tags, self.pt_id_external, self.time_collected}
         self.workflow_tags  = [
                                 'vocal_acoustics',
                                 'speech_characteristics',
@@ -158,18 +157,6 @@ class CSVValidation():
             return True, None
         return False, f"Invalid {self.time_collected} formatting"
     
-    def _is_data_type_valid(self, data_type: str) -> Tuple[bool, str]:
-        """
-        Check if data type is valid
-
-        Parameters:
-            data_type: A string representation of data types
-        Returns:
-            boolean, str
-        """
-        if data_type in [None, ""] or data_type:
-            return True, None
-        return False, f"Invalid {self.data_type} formatting"
 
     def validate_row(self, row) -> Tuple[bool, str]:
         """
@@ -194,9 +181,6 @@ class CSVValidation():
         
         is_valid_collect_time, error = self._is_time_collected_valid(row[self.time_collected])
         if error: return (is_valid_collect_time, error)
-        
-        is_valid_datatype, error = self._is_data_type_valid(row[self.data_type])
-        if error: return (is_valid_datatype, error)
         
         return True, None
 

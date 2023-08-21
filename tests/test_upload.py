@@ -7,8 +7,8 @@ class TestUpload:
     def setup(self):
         self.key = "dummy key"
         self.metadata = "data.csv"
-        self.df_row = ['dev_testing', 'video.mp4', 'tags', 'qwerty', '2023-22-22', '']
-        self.df_cols = ['project_name', 'file_path', 'workflow_tags', 'pt_id_external', 'time_collected', 'data_type']
+        self.df_row = ['dev_testing', 'video.mp4', 'tags', 'qwerty', '2023-22-22',]
+        self.df_cols = ['project_name', 'file_path', 'workflow_tags', 'pt_id_external', 'time_collected']
         self.response_df_cols = ['filename', 'upload_status', 'upload_message']
 
     @patch('willisapi_client.services.upload.csv_validation.CSVValidation.validate_row')
