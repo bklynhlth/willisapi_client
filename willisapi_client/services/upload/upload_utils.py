@@ -79,8 +79,6 @@ class UploadUtils:
         data = dict(project_name=row.project_name, workflow_tags=row.workflow_tags, pt_id_external=row.pt_id_external, filename=pathlib.Path(row.file_path).name)
         if row.time_collected:
             data["time_collected"] = row.time_collected
-        if row.data_type:
-            data["data_type"] = row.data_type
         
         try:
             response = requests.post(f"{url}?type=initiate", json=data, headers=headers)

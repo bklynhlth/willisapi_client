@@ -41,7 +41,6 @@ class TestCSVValidation:
             "workflow_tags": "speech_characteristics",
             "pt_id_external": "qwerty",
             "time_collected": "2023-02-02",
-            "data_type": ""
         }  
         is_valid, _ = csv.validate_row(row)
         assert is_valid == True
@@ -61,7 +60,6 @@ class TestCSVValidation:
             "workflow_tags": "speech_characteristics",
             "pt_id_external": "qwerty",
             "time_collected": "2023-02-02",
-            "data_type": ""
         }  
         is_valid, _ = csv.validate_row(row)
         assert is_valid == False
@@ -81,7 +79,6 @@ class TestCSVValidation:
             "workflow_tags": "speech_characteristics",
             "pt_id_external": "qwerty",
             "time_collected": "2023-02-02",
-            "data_type": ""
         }  
         is_valid, _ = csv.validate_row(row)
         assert is_valid == False
@@ -101,7 +98,6 @@ class TestCSVValidation:
             "workflow_tags": "wrong_tag",
             "pt_id_external": "qwerty",
             "time_collected": "2023-02-02",
-            "data_type": ""
         }  
         is_valid, _ = csv.validate_row(row)
         assert is_valid == False
@@ -121,7 +117,6 @@ class TestCSVValidation:
             "workflow_tags": "speech_characteristics",
             "pt_id_external": "",
             "time_collected": "2023-02-02",
-            "data_type": ""
         }  
         is_valid, _ = csv.validate_row(row)
         assert is_valid == False
@@ -141,7 +136,6 @@ class TestCSVValidation:
             "workflow_tags": "speech_characteristics",
             "pt_id_external": "",
             "time_collected": "20-02-02",
-            "data_type": ""
         }  
         is_valid, _ = csv.validate_row(row)
         assert is_valid == False
