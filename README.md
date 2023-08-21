@@ -72,7 +72,7 @@ measures = willisapi.download(key, 'project_name')
 
 If you run into trouble while using the client, please raise it in the [Issues](www.github.com/bklynhlth/willisapi_client/issues) tab. 
 
-––
+***
 
 Brooklyn Health is a small team of clinicians, scientists, and engineers based in Brooklyn, NY. 
 
