@@ -26,11 +26,13 @@ class CSVValidation():
                                 'facial_expressivity',
                                 'emotional_expressivity',
                                 'emotion_and_expressivity',
-                                'speech_transcription_panss',
-                                'scale_panss',
                                 'speaker_separation',
                                 'speech_characteristics_from_json'
                                 ]
+        self.dynamic_workflow_tags = [
+            'speech_transcription_',
+            'scale_'
+        ]
         self.collect_time_format = r'^\d{4}-\d{2}-\d{2}$'
         self.df = None
         self.invalid_csv = "invalid csv input"
@@ -125,9 +127,10 @@ class CSVValidation():
             boolean, str
         """
         tags = workflow_tags.split(",")
-        if set(tags).issubset(set(self.workflow_tags)):
-            return True, None
-        return False, f"Invalid {self.tags} formatting"
+        for tag in tags:
+            if not(tag in self.workflow_tags or tag.startswith(tuple(self.dynamic_workflow_tags))):
+                return False, f"Invalid {self.tags} formatting"
+        return True, None
     
     def _is_pt_id_external_valid(self, pt_id_ext: str) -> Tuple[bool, str]:
         """
