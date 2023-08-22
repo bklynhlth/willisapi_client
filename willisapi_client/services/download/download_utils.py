@@ -46,7 +46,7 @@ class DownloadUtils:
         """
         Get defined columns name
         """
-        return ['pt_id_external', 'filename', 'project_name', 'time_collected']
+        return ['project_name', 'pt_id_external', 'filename', 'time_collected']
     
     def _get_summary_df_from_json(response, pt, rec, workflow_tag):
         """
@@ -71,7 +71,7 @@ class DownloadUtils:
                 (pt_id_ext, num_records) = DownloadUtils._get_pt_id_ext_and_num_records(response, pt)
                 for rec in range(0, num_records):
                     (filename, time_collected) = DownloadUtils._get_filename_and_timestamp(response, pt, rec)
-                    main_df = pd.DataFrame([[pt_id_ext, filename, project_name, time_collected]] * num_records, columns=DownloadUtils._get_defined_columns())
+                    main_df = pd.DataFrame([[project_name, pt_id_ext, filename, time_collected]] * num_records, columns=DownloadUtils._get_defined_columns())
                     emotional_expressivity_summary_df = DownloadUtils._get_summary_df_from_json(response, pt, rec, "emotional_expressivity_summary")
                     facial_expressivity_summary_df = DownloadUtils._get_summary_df_from_json(response, pt, rec, "facial_expressivity_summary")
                     vocal_acoustics_summary_df = DownloadUtils._get_summary_df_from_json(response, pt, rec, "vocal_acoustic_summary")
