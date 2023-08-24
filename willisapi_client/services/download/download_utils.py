@@ -14,10 +14,23 @@ class DownloadUtils:
 
     def request(url, headers, try_number):
         """
-        This is an internal download function which makes a GET API call to brooklyn.health API server
+        ------------------------------------------------------------------------------------------------------
+        Class: DownloadUtils
+
+        Function: request
+
+        Description: This is an internal download function which makes a GET API call to brooklyn.health API server
+
+        Parameters:
+        ----------
+        url: The URL of the API endpoint.
+        headers: The headers to be sent in the request.
+        try_number: The number of times the function has been tried.
 
         Returns:
-            json
+        ----------
+        json: The JSON response from the API server.
+        ------------------------------------------------------------------------------------------------------
         """
         try:
             response = requests.get(url, headers=headers)
@@ -32,31 +45,103 @@ class DownloadUtils:
         
     def _get_project_name_and_pts_count(response):
         """
-        Get project and participant count from json data
+        ------------------------------------------------------------------------------------------------------
+        Class: DownloadUtils
+
+        Function: _get_project_name_and_pts_count
+
+        Description: Get project and participant count from json data
+
+        Parameters:
+        ----------
+        response: The JSON response from the API server.
+
+        Returns:
+        ----------
+        (project_name, pt_count): Name of the project and number of participants of the project (str, int)
+        ------------------------------------------------------------------------------------------------------
         """
         return (response["items"]["project"]["project_name"], len(response["items"]["project"]["participant"]))
     
     def _get_pt_id_ext_and_num_records(response, pt):
         """
-        Get participant id external and records count from json data
+        ------------------------------------------------------------------------------------------------------
+        Class: DownloadUtils
+
+        Function: _get_pt_id_ext_and_num_records
+
+        Description: Get participant id external and records count from json data
+
+        Parameters:
+        ----------
+        response: The JSON response from the API server.
+        pt: Index of participant
+
+        Returns:
+        ----------
+        (pt_id, record_count): Id of the participant and number of records of the participant (str, int)
+        ------------------------------------------------------------------------------------------------------
         """
         return (response["items"]["project"]["participant"][pt]["participant_Id"], len(response["items"]["project"]["participant"][pt]["results"]))
     
     def _get_filename_and_timestamp(response, pt, rec):
         """
-        Get filename and time_collected from json data
+        ------------------------------------------------------------------------------------------------------
+        Class: DownloadUtils
+
+        Function: _get_filename_and_timestamp
+        
+        Description: Get filename and time_collected from json data
+
+        Parameters:
+        ----------
+        response: The JSON response from the API server.
+        pt: Index of participant
+        rec: Record data from API server
+
+        Returns:
+        ----------
+        (filename, timestamp): filename and timestamp of the record (str, str)
+        ------------------------------------------------------------------------------------------------------
         """
         return (response["items"]["project"]["participant"][pt]["results"][rec]["file_name"], response["items"]["project"]["participant"][pt]["results"][rec]["timestamp"])
     
     def _get_defined_columns():
         """
-        Get defined columns name
+        ------------------------------------------------------------------------------------------------------
+        Class: DownloadUtils
+
+        Function: _get_defined_columns
+
+        Description: Get defined columns name
+
+        Returns:
+        ----------
+        column_names: A list of static column names of the dataframe
+        ------------------------------------------------------------------------------------------------------
         """
         return ['project_name', 'pt_id_external', 'filename', 'time_collected']
     
     def _get_summary_df_from_json(response, pt, rec, workflow_tag):
         """
-        Get summary dataframe of each workflow tag json data
+        ------------------------------------------------------------------------------------------------------
+        Class: DownloadUtils
+
+        Function: _get_summary_df_from_json
+
+        Description: Get summary dataframe of each workflow tag json data
+        
+        Parameters:
+        ----------
+        response: The JSON response from the API server.
+        pt: Index of participant
+        rec: Record data from API server
+        workflow_tag: Workflow Tag
+
+        Returns:
+        ----------
+        df: A pandas dataframe of specific workflow tag
+        ------------------------------------------------------------------------------------------------------
         """
         measures_dict = response["items"]["project"]["participant"][pt]["results"][rec]["measures"]
         if workflow_tag in measures_dict:
@@ -69,7 +154,21 @@ class DownloadUtils:
 
     def generate_response_df(response) -> Tuple[pd.DataFrame, str]:
         """
-        This function converts the json data to dataframe
+        ------------------------------------------------------------------------------------------------------
+        Class: DownloadUtils
+
+        Function: generate_response_df
+
+        Description: This function converts the json data to dataframe
+        
+        Parameters:
+        ----------
+        response: The JSON response from the API server.
+
+        Returns:
+        ----------
+        (dataframe, error): Generates response dataframe and error message
+        ------------------------------------------------------------------------------------------------------
         """
         response_df = pd.DataFrame()
         try:

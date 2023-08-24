@@ -13,21 +13,18 @@ from willisapi_client.timer import measure
 def upload(key, data):
     """
     ---------------------------------------------------------------------------------------------------
+    Function: upload
 
-    This function to upload data using willis upload API
+    Description: This function upload data using willis upload API
 
     Parameters:
-    ............
-    key: str
-        Temporary access token
-    data: str
-        Path to data csv file
+    ----------
+    key: AWS access id token
+    data: Path to metadata csv file
 
     Returns:
-    ............
-    summary : pandas Dataframe
-        upload summary
-
+    ----------
+    summary: Returns upload summary pandas Dataframe
     ---------------------------------------------------------------------------------------------------
     """
     csv = CSVValidation(file_path=data)

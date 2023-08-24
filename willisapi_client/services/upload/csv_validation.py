@@ -39,10 +39,17 @@ class CSVValidation():
     
     def _is_valid(self) -> bool:
         """
-        Checks the validity of input file
+        ------------------------------------------------------------------------------------------------------
+        Class: CSVValidation
 
+        Function: _is_valid
+
+        Description: Checks the validity of input file
+        
         Returns:
-            boolean
+        ----------
+        boolena: True/False based on input file validity
+        ------------------------------------------------------------------------------------------------------
         """
         if not self._is_file():
             logger.error(self.invalid_csv)
@@ -57,19 +64,33 @@ class CSVValidation():
     
     def _is_file(self) -> bool:
         """
-        Check if input is a file
+        ------------------------------------------------------------------------------------------------------
+        Class: CSVValidation
 
+        Function: _is_file
+
+        Description: Check if input is a file
+        
         Returns:
-            boolean
+        ----------
+        boolena: True/False based on input file 
+        ------------------------------------------------------------------------------------------------------
         """
         return os.path.exists(self.file_path) and os.path.isfile(self.file_path)
 
     def _is_valid_file_ext(self) -> bool:
         """
-        Check if input is a valid CSV file
+        ------------------------------------------------------------------------------------------------------
+        Class: CSVValidation
 
+        Function: _is_valid_file_ext
+
+        Description: Check if input is a valid CSV file
+        
         Returns:
-            boolean
+        ----------
+        boolena: True/False based on valid input csv file 
+        ------------------------------------------------------------------------------------------------------
         """
         file_ext = self.file_path.split(".")[-1]
         if file_ext == self.expected_file_ext:
@@ -78,10 +99,17 @@ class CSVValidation():
             
     def _is_valid_headers(self) -> bool:
         """
-        Check if input CSV has valid headers
+        ------------------------------------------------------------------------------------------------------
+        Class: CSVValidation
 
+        Function: _is_valid_headers
+
+        Description: Check if input CSV has valid headers
+        
         Returns:
-            boolean
+        ----------
+        boolena: True/False based on input CSV headers
+        ------------------------------------------------------------------------------------------------------
         """
         df = pd.read_csv(self.file_path)
         df = df.replace({np.nan: None})
@@ -93,12 +121,22 @@ class CSVValidation():
 
     def _is_project_name_valid(self, name: str) -> Tuple[bool, str]:
         """
-        Check if project_name is not empty
+        ------------------------------------------------------------------------------------------------------
+        Class: CSVValidation
+
+        Function: _is_project_name_valid
+
+        Description: Check if project_name is empty
 
         Parameters:
-            name: project name
+        ----------
+        name: name of the project
+        
         Returns:
-            boolean, str
+        ----------
+        boolena: True/False based on valid project_name
+        error: A str error message if project is invalid
+        ------------------------------------------------------------------------------------------------------
         """
         if name:
             return True, None
@@ -106,12 +144,22 @@ class CSVValidation():
     
     def _is_file_path_valid(self, file_path: str) -> Tuple[bool, str]:
         """
-        Check if file path is not valid
+        ------------------------------------------------------------------------------------------------------
+        Class: CSVValidation
+
+        Function: _is_file_path_valid
+
+        Description: Check if file path is valid
 
         Parameters:
-            file_path: A string of file path
+        ----------
+        file_path: A string of file path
+        
         Returns:
-            boolean, str
+        ----------
+        boolena: True/False based on valid file_path
+        error: A str error message if file_path is invalid
+        ------------------------------------------------------------------------------------------------------
         """
         if file_path and os.path.exists(file_path) and os.path.isfile(file_path):
             return True, None
@@ -119,12 +167,22 @@ class CSVValidation():
 
     def _is_workflow_tags_valid(self, workflow_tags: str) -> Tuple[bool, str]:
         """
-        Check if workflow tags are valid
+        ------------------------------------------------------------------------------------------------------
+        Class: CSVValidation
+
+        Function: _is_workflow_tags_valid
+
+        Description: Check if workflow tags are valid
 
         Parameters:
-            workflow_tags: A comma separated string of workflow tags
+        ----------
+        workflow_tags: A comma separated string of workflow tags
+        
         Returns:
-            boolean, str
+        ----------
+        boolena: True/False based on valid workflow_tags
+        error: A str error message if workflow_tags is invalid
+        ------------------------------------------------------------------------------------------------------
         """
         tags = workflow_tags.split(",")
         for tag in tags:
@@ -134,12 +192,22 @@ class CSVValidation():
     
     def _is_pt_id_external_valid(self, pt_id_ext: str) -> Tuple[bool, str]:
         """
-        Check if pt_id_external is not empty
+        ------------------------------------------------------------------------------------------------------
+        Class: CSVValidation
+
+        Function: _is_pt_id_external_valid
+
+        Description: Check if pt_id_external is not empty
 
         Parameters:
-            pt_id_ext: A string to pt_id_external
+        ----------
+        pt_id_ext: A string of pt_id_external
+        
         Returns:
-            boolean, str
+        ----------
+        boolena: True/False based on valid pt_id_ext
+        error: A str error message if pt_id_ext is invalid
+        ------------------------------------------------------------------------------------------------------
         """
         if pt_id_ext:
             return True, None
@@ -147,12 +215,22 @@ class CSVValidation():
     
     def _is_time_collected_valid(self, collect_time: str) -> Tuple[bool, str]:
         """
-        Check if collect_time is valid
+        ------------------------------------------------------------------------------------------------------
+        Class: CSVValidation
+
+        Function: _is_time_collected_valid
+
+        Description: Check if collect_time is valid
 
         Parameters:
-            collect_time: A string to collect_time (YYYY-MM-DD)
+        ----------
+        collect_time: A string to collect_time (YYYY-MM-DD)
+        
         Returns:
-            boolean, str
+        ----------
+        boolena: True/False based on valid collect_time
+        error: A str error message if collect_time is invalid
+        ------------------------------------------------------------------------------------------------------
         """
         if collect_time == None:
             return True, None
@@ -163,12 +241,22 @@ class CSVValidation():
 
     def validate_row(self, row) -> Tuple[bool, str]:
         """
-        This function validates a row of a dataframe
+        ------------------------------------------------------------------------------------------------------
+        Class: CSVValidation
+
+        Function: validate_row
+
+        Description: This function validates a row of a dataframe
 
         Parameters:
-            row: this is row of a dataframe
+        ----------
+        row: A row of a dataframe
+        
         Returns:
-            boolean, str
+        ----------
+        boolena: True/False based on valid row
+        error: A str error message if row is invalid
+        ------------------------------------------------------------------------------------------------------
         """
         is_valid_project, error = self._is_project_name_valid(row[self.project_name])
         if error: return (is_valid_project, error)
@@ -189,14 +277,32 @@ class CSVValidation():
 
     def get_filename(self) -> str:
         """
-        This function returns the name of the file
+        ------------------------------------------------------------------------------------------------------
+        Class: CSVValidation
 
-        Parameters:
-            file_path: A string representation of file path
+        Function: get_filename
+
+        Description: This function returns the name of the file
+        
         Returns:
-            str
+        ----------
+        filename: filename of class object instance (str)
+        ------------------------------------------------------------------------------------------------------
         """
         return pathlib.Path(self.file_path).name
 
     def get_dataframe(self):
+        """
+        ------------------------------------------------------------------------------------------------------
+        Class: CSVValidation
+
+        Function: get_dataframe
+
+        Description: This function returns the dataframe
+        
+        Returns:
+        ----------
+        df: df of class object instance (pd.DataFrame)
+        ------------------------------------------------------------------------------------------------------
+        """
         return self.df
