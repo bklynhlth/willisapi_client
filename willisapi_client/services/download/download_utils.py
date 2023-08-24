@@ -87,7 +87,7 @@ class DownloadUtils:
                     speech_characteristics_summary_df = DownloadUtils._get_summary_df_from_json(response, pt, rec, speech_characteristics_summary)
                     df = pd.concat([main_df, emotional_expressivity_summary_df, facial_expressivity_summary_df, vocal_acoustics_summary_df, speech_characteristics_summary_df], axis=1)
                     response_df = response_df._append(df, ignore_index=True)
-            response_df.drop(['stats'], axis=1)
+            response_df = response_df.drop(['stats'], axis=1)
         except Exception as ex:
             return None, f"{ex}"
         else:
