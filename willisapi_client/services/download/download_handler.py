@@ -11,21 +11,18 @@ from willisapi_client.timer import measure
 def download(key: str, project_name: str):
     """
     ---------------------------------------------------------------------------------------------------
+    Function: download
 
-    This function to download data using willis download API from secure database
+    Description: This function to download data using willis download API from secure database
 
     Parameters:
-    ............
-    key: str
-        Temporary access token
-    project_name: str
-        name of the project
+    ----------
+    key: AWS access id token (str)
+    project_name: name of the project (str)
 
     Returns:
-    ............
-    summary : json
-        download summary
-
+    ----------
+    measures: A pandas dataframe
     ---------------------------------------------------------------------------------------------------
     """
 

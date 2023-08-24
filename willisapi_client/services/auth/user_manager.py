@@ -8,23 +8,19 @@ from willisapi_client.logging_setup import logger as logger
 def create_user(key: str, client_email: str , client_name: str) -> str:
     """
     ---------------------------------------------------------------------------------------------------
-
-    This is the signup function to access willisAPI signup API
+    Function: create_user
+    
+    Description: This is the signup function to access willisAPI signup API
 
     Parameters:
-    ............
-    key: str
-        Temporary access token
-    client_email: str
-        expected onboarded userid
-    client_name: str
-        expected group name without empty spaces
+    ----------
+    key: Admin access token
+    client_email: string representation of client email id
+    client_name: stringbrepresentation of expected client name without empty spaces
 
     Returns:
-    ............
-    status : str
-        Onboard succes/fail message
-
+    ----------
+    status : Onboard succes/fail message (str/None)
     ---------------------------------------------------------------------------------------------------
     """
 

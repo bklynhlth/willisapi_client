@@ -10,22 +10,19 @@ from willisapi_client.logging_setup import logger as logger
 def login(username: str, password: str) -> Tuple[str, int]:
     """
     ---------------------------------------------------------------------------------------------------
+    Function: login
 
-    This is the login function to access willisAPI login API
+    Description: This is the login function to access willisAPI login API
 
     Parameters:
-    ............
-    username: str
-        expected userid
-    password: str
-        expected password
+    ----------
+    username: string representation of email id
+    password: string representation of password
 
     Returns:
-    ............
-    key : str
-        AWS access key token
-    expiration: int
-        AWS token expiration time
+    ----------
+    key : AWS access key token (str/None)
+    expiration: AWS token expiration time (int/None)
 
     ---------------------------------------------------------------------------------------------------
     """
