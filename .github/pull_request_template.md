@@ -8,7 +8,7 @@
 
 ## Checklist
 
-- [ ] I have followed the coding style guidelines.
-- [ ] I have tested these changes.
-- [ ] I have updated the documentation to reflect these changes.
-- [ ] I have assigned reviewers to this pull request.
+- [ ] followed the coding style guidelines.
+- [ ] tested all changes.
+- [ ] updated the documentation to reflect these changes.
+- [ ] assigned reviewers to this pull request.
