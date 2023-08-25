@@ -1,0 +1,2 @@
+project_name,pt_id_external,file_path,time_collected,workflow_tags
+sample_project,pt_001,/user/sample_data/sample_file.wav,2022-07-12,sample_workflow_tag

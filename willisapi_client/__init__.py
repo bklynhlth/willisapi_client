@@ -1,4 +1,4 @@
-# website:   http://www.brooklyn.health
+# website:   https://www.brooklyn.health
 
 # import the required packages
 from willisapi_client.services.api import (
