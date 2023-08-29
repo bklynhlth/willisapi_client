@@ -78,6 +78,8 @@ class TestSignupFunction:
         self.non_admin_key = "non_admin_key"
         self.client_email = "client@email.com"
         self.client_name = "client"
+        self.first_name = "First"
+        self.last_name = "Last"
 
     @patch('willisapi_client.services.auth.login_manager.AuthUtils.signup')
     def test_signup_failed(self, mocked_signup):
@@ -85,7 +87,7 @@ class TestSignupFunction:
             "status_code": 200,
             "message": "Not an admin user"
             }
-        message = create_user(self.non_admin_key, self.client_email, self.client_name)
+        message = create_user(self.non_admin_key, self.client_email, self.client_name, self.first_name, self.last_name)
         assert message == "Not an admin user"
 
     @patch('willisapi_client.services.auth.login_manager.AuthUtils.signup')
@@ -94,7 +96,7 @@ class TestSignupFunction:
             "status_code": 200,
             "message": "User created"
             }
-        message = create_user(self.admin_key, self.client_email, self.client_name)
+        message = create_user(self.admin_key, self.client_email, self.client_name, self.first_name, self.last_name)
         assert message == "User created"
 
     @patch('willisapi_client.services.auth.login_manager.AuthUtils.signup')
@@ -102,7 +104,7 @@ class TestSignupFunction:
         mocked_signup.return_value = {
             "status_code": 400,
             }
-        message = create_user(self.admin_key, self.client_email, self.client_name)
+        message = create_user(self.admin_key, self.client_email, self.client_name, self.first_name, self.last_name)
         assert message == None
 
     @patch('willisapi_client.services.auth.login_manager.AuthUtils.signup')
@@ -110,7 +112,7 @@ class TestSignupFunction:
         mocked_signup.return_value = {
             "status_code": 500,
             }
-        message = create_user(self.admin_key, self.client_email, self.client_name)
+        message = create_user(self.admin_key, self.client_email, self.client_name, self.first_name, self.last_name)
         assert message == None
 
     @patch('willisapi_client.services.auth.login_manager.AuthUtils.signup')
@@ -118,7 +120,7 @@ class TestSignupFunction:
         mocked_signup.return_value = {
             "status_code": 401,
             }
-        message = create_user(self.admin_key, self.client_email, self.client_name)
+        message = create_user(self.admin_key, self.client_email, self.client_name, self.first_name, self.last_name)
         assert message == None
 
     @patch('willisapi_client.services.auth.login_manager.AuthUtils.signup')
@@ -126,5 +128,5 @@ class TestSignupFunction:
         mocked_signup.return_value = {
             "status_code": 403,
             }
-        message = create_user(self.admin_key, self.client_email, self.client_name)
+        message = create_user(self.admin_key, self.client_email, self.client_name, self.first_name, self.last_name)
         assert message == None
