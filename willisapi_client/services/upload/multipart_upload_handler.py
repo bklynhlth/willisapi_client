@@ -31,7 +31,7 @@ def upload(key, data, **kwargs):
     if csv._is_valid():
         logger.info(f'{datetime.now().strftime("%H:%M:%S")}: csv check passed')
         dataframe = csv.get_dataframe()
-        wc = WillisapiClient(env = kwargs['env'] if 'env' in kwargs else None)
+        wc = WillisapiClient(env = kwargs.get('env'))
         url = wc.get_upload_url()
         headers = wc.get_headers()
         headers['Authorization'] = key
