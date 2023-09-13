@@ -26,7 +26,7 @@ def download(key: str, project_name: str, **kwargs):
     ---------------------------------------------------------------------------------------------------
     """
 
-    wc = WillisapiClient(env = kwargs['env'] if 'env' in kwargs else None)
+    wc = WillisapiClient(env = kwargs.get('env'))
     url = wc.get_download_url() + f"?project_name={project_name}"
     headers = wc.get_headers()
     headers['Authorization'] = key

@@ -26,7 +26,7 @@ def login(username: str, password: str, **kwargs) -> Tuple[str, int]:
 
     ---------------------------------------------------------------------------------------------------
     """
-    wc = WillisapiClient(env = kwargs['env'] if 'env' in kwargs else None)
+    wc = WillisapiClient(env = kwargs.get('env'))
     url = wc.get_login_url()
     headers = wc.get_headers()
     data = dict(username=username, password=password)
