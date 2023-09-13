@@ -7,7 +7,7 @@ from willisapi_client.willisapi_client import WillisapiClient
 from willisapi_client.services.auth.auth_utils import AuthUtils
 from willisapi_client.logging_setup import logger as logger
 
-def login(username: str, password: str) -> Tuple[str, int]:
+def login(username: str, password: str, **kwargs) -> Tuple[str, int]:
     """
     ---------------------------------------------------------------------------------------------------
     Function: login
@@ -26,7 +26,7 @@ def login(username: str, password: str) -> Tuple[str, int]:
 
     ---------------------------------------------------------------------------------------------------
     """
-    wc = WillisapiClient()
+    wc = WillisapiClient(env = kwargs['env'] if 'env' in kwargs else None)
     url = wc.get_login_url()
     headers = wc.get_headers()
     data = dict(username=username, password=password)

@@ -5,7 +5,7 @@ from willisapi_client.willisapi_client import WillisapiClient
 from willisapi_client.services.auth.auth_utils import AuthUtils
 from willisapi_client.logging_setup import logger as logger
 
-def create_user(key: str, client_email: str , client_name: str, first_name: str, last_name: str) -> str:
+def create_user(key: str, client_email: str , client_name: str, first_name: str, last_name: str, **kwargs) -> str:
     """
     ---------------------------------------------------------------------------------------------------
     Function: create_user
@@ -26,7 +26,7 @@ def create_user(key: str, client_email: str , client_name: str, first_name: str,
     ---------------------------------------------------------------------------------------------------
     """
 
-    wc = WillisapiClient()
+    wc = WillisapiClient(env = kwargs['env'] if 'env' in kwargs else None)
     url = wc.get_signup_url()
     headers = wc.get_headers()
     headers['Authorization'] = key
