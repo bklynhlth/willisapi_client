@@ -26,7 +26,7 @@ def create_user(key: str, client_email: str , client_name: str, first_name: str,
     ---------------------------------------------------------------------------------------------------
     """
 
-    wc = WillisapiClient(env = kwargs['env'] if 'env' in kwargs else None)
+    wc = WillisapiClient(env = kwargs.get('env'))
     url = wc.get_signup_url()
     headers = wc.get_headers()
     headers['Authorization'] = key
