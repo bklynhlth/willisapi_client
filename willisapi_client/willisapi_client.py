@@ -16,8 +16,6 @@ class WillisapiClient():
         self.api_uri = "api.brooklyn.health"
         self.app_url = f"app.brooklyn.health/api/v{self.api_version}/"
         self.env = kwargs['env'] if 'env' in kwargs else None
-        # uncomment self.env = 'dev' while development
-        # self.env = 'dev' 
     
     def get_base_url(self):
         if self.env:

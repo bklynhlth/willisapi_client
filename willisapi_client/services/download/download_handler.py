@@ -8,7 +8,7 @@ from willisapi_client.logging_setup import logger as logger
 from willisapi_client.timer import measure
 
 @measure
-def download(key: str, project_name: str):
+def download(key: str, project_name: str, **kwargs):
     """
     ---------------------------------------------------------------------------------------------------
     Function: download
@@ -26,7 +26,7 @@ def download(key: str, project_name: str):
     ---------------------------------------------------------------------------------------------------
     """
 
-    wc = WillisapiClient()
+    wc = WillisapiClient(env = kwargs['env'] if 'env' in kwargs else None)
     url = wc.get_download_url() + f"?project_name={project_name}"
     headers = wc.get_headers()
     headers['Authorization'] = key

@@ -10,7 +10,7 @@ from willisapi_client.logging_setup import logger as logger
 from willisapi_client.timer import measure
 
 @measure
-def upload(key, data):
+def upload(key, data, **kwargs):
     """
     ---------------------------------------------------------------------------------------------------
     Function: upload
@@ -31,7 +31,7 @@ def upload(key, data):
     if csv._is_valid():
         logger.info(f'{datetime.now().strftime("%H:%M:%S")}: csv check passed')
         dataframe = csv.get_dataframe()
-        wc = WillisapiClient()
+        wc = WillisapiClient(env = kwargs['env'] if 'env' in kwargs else None)
         url = wc.get_upload_url()
         headers = wc.get_headers()
         headers['Authorization'] = key
