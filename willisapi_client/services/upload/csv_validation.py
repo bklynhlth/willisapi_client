@@ -33,6 +33,7 @@ class CSVValidation():
                                 ]
         self.dynamic_workflow_tags = [
             'speech_transcription_',
+            'speaker_separation_',
             'scale_',
             'rater_qa_'
         ]
