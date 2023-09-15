@@ -17,7 +17,8 @@ class CSVValidation():
         self.pt_id_external = 'pt_id_external'
         self.time_collected = 'time_collected'
         self.upload_file_path = 'file_path'
-        self.expected_headers = {self.project_name, self.upload_file_path, self.tags, self.pt_id_external, self.time_collected}
+        self.language = 'language'
+        self.expected_headers = {self.project_name, self.upload_file_path, self.tags, self.pt_id_external, self.time_collected, self.language}
         self.workflow_tags  = [
                                 'vocal_acoustics',
                                 'speech_characteristics',
@@ -27,11 +28,13 @@ class CSVValidation():
                                 'emotional_expressivity',
                                 'emotion_and_expressivity',
                                 'speaker_separation',
-                                'speech_characteristics_from_json'
+                                'speech_characteristics_from_json',
+                                'eye_blink_rate'
                                 ]
         self.dynamic_workflow_tags = [
             'speech_transcription_',
-            'scale_'
+            'scale_',
+            'rater_qa_'
         ]
         self.collect_time_format = r'^\d{4}-\d{2}-\d{2}$'
         self.df = None
