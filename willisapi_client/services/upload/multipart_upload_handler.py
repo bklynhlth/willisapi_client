@@ -9,6 +9,7 @@ from willisapi_client.services.upload.upload_utils import UploadUtils
 from willisapi_client.logging_setup import logger as logger
 from willisapi_client.timer import measure
 
+
 @measure
 def upload(key, data, **kwargs):
     """
@@ -34,7 +35,7 @@ def upload(key, data, **kwargs):
         wc = WillisapiClient(env = kwargs.get('env'))
         url = wc.get_upload_url()
         headers = wc.get_headers()
-        headers['Authorization'] = key
+        headers["Authorization"] = key
         summary = []
         logger.info(f'{datetime.now().strftime("%H:%M:%S")}: beginning upload')
         for index, row in tqdm(dataframe.iterrows(), total=dataframe.shape[0]):
@@ -48,8 +49,10 @@ def upload(key, data, **kwargs):
             else:
                 summary.append([row.file_path, "fail", error])
 
-        res_df = pd.DataFrame(summary, columns=['filename', 'upload_status', 'upload_message'])
-        number_of_files_uploaded = len(res_df[res_df['upload_status']=="success"])
-        number_of_files_failed = len(res_df[res_df['upload_status']=="fail"])
+        res_df = pd.DataFrame(
+            summary, columns=["filename", "upload_status", "upload_message"]
+        )
+        number_of_files_uploaded = len(res_df[res_df["upload_status"] == "success"])
+        number_of_files_failed = len(res_df[res_df["upload_status"] == "fail"])
         UploadUtils.summary_logs(number_of_files_uploaded, number_of_files_failed)
         return res_df
