@@ -33,8 +33,9 @@ def login(username: str, password: str, **kwargs) -> Tuple[str, int]:
     response = AuthUtils.login(url, data, headers, try_number=1)
     if response and 'status_code' in response and response['status_code'] == HTTPStatus.OK:
         logger.info("Login Successful; Key acquired")
-        logger.info(f"Key expiration: {response['result']['expires_in']}")
-        return (response['result']['id_token'], response['result']['expires_in'])
+        logger.info(f"Key expiration: {str(datetime.datetime.now() + datetime.timedelta(seconds=response['result']['expires_in']))}")
+        required_format= f"{str(datetime.datetime.now() + datetime.timedelta(seconds=response['result']['expires_in']))}"
+        return (response['result']['id_token'], required_format)
     else:
         logger.error(f"Login Failed")
         return (None, None)
