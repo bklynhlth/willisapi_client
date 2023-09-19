@@ -281,7 +281,7 @@ class CSVValidation:
         """
         if language == None:
             return (True, None)
-        if language and (language, language) in LANGUAGE_CHOICES:
+        if language and language in LANGUAGE_CHOICES:
             return (True, None)
         return (False, f"Invalid {self.language} formatting")
 
