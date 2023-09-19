@@ -5,42 +5,54 @@ import pathlib
 import re
 from typing import Tuple
 
-from willisapi_client.services.exceptions import InvalidFileType, InvalidFilePath, InvalidCSVColumns
+from willisapi_client.services.exceptions import (
+    InvalidFileType,
+    InvalidFilePath,
+    InvalidCSVColumns,
+)
 from willisapi_client.logging_setup import logger as logger
 
-class CSVValidation():
+
+class CSVValidation:
     def __init__(self, file_path: str):
         self.file_path = file_path
-        self.expected_file_ext = 'csv'
-        self.project_name = 'project_name'
-        self.tags = 'workflow_tags'
-        self.pt_id_external = 'pt_id_external'
-        self.time_collected = 'time_collected'
-        self.upload_file_path = 'file_path'
-        self.language = 'language'
-        self.expected_headers = {self.project_name, self.upload_file_path, self.tags, self.pt_id_external, self.time_collected, self.language}
-        self.workflow_tags  = [
-                                'vocal_acoustics',
-                                'speech_characteristics',
-                                'speech_transcription',
-                                'voice_and_speech',
-                                'facial_expressivity',
-                                'emotional_expressivity',
-                                'emotion_and_expressivity',
-                                'speaker_separation',
-                                'speech_characteristics_from_json',
-                                'eye_blink_rate'
-                                ]
-        self.dynamic_workflow_tags = [
-            'speech_transcription_',
-            'speaker_separation_',
-            'scale_',
-            'rater_qa_'
+        self.expected_file_ext = "csv"
+        self.project_name = "project_name"
+        self.tags = "workflow_tags"
+        self.pt_id_external = "pt_id_external"
+        self.time_collected = "time_collected"
+        self.upload_file_path = "file_path"
+        self.language = "language"
+        self.expected_headers = {
+            self.project_name,
+            self.upload_file_path,
+            self.tags,
+            self.pt_id_external,
+            self.time_collected,
+            self.language,
+        }
+        self.workflow_tags = [
+            "vocal_acoustics",
+            "speech_characteristics",
+            "speech_transcription",
+            "voice_and_speech",
+            "facial_expressivity",
+            "emotional_expressivity",
+            "emotion_and_expressivity",
+            "speaker_separation",
+            "speech_characteristics_from_json",
+            "eye_blink_rate",
         ]
-        self.collect_time_format = r'^\d{4}-\d{2}-\d{2}$'
+        self.dynamic_workflow_tags = [
+            "speech_transcription_",
+            "speaker_separation_",
+            "scale_",
+            "rater_qa_",
+        ]
+        self.collect_time_format = r"^\d{4}-\d{2}-\d{2}$"
         self.df = None
         self.invalid_csv = "invalid csv input"
-    
+
     def _is_valid(self) -> bool:
         """
         ------------------------------------------------------------------------------------------------------
@@ -49,7 +61,7 @@ class CSVValidation():
         Function: _is_valid
 
         Description: Checks the validity of input file
-        
+
         Returns:
         ----------
         boolena: True/False based on input file validity
@@ -65,7 +77,7 @@ class CSVValidation():
             logger.error(self.invalid_csv)
             return False
         return True
-    
+
     def _is_file(self) -> bool:
         """
         ------------------------------------------------------------------------------------------------------
@@ -74,10 +86,10 @@ class CSVValidation():
         Function: _is_file
 
         Description: Check if input is a file
-        
+
         Returns:
         ----------
-        boolena: True/False based on input file 
+        boolena: True/False based on input file
         ------------------------------------------------------------------------------------------------------
         """
         return os.path.exists(self.file_path) and os.path.isfile(self.file_path)
@@ -90,17 +102,17 @@ class CSVValidation():
         Function: _is_valid_file_ext
 
         Description: Check if input is a valid CSV file
-        
+
         Returns:
         ----------
-        boolena: True/False based on valid input csv file 
+        boolena: True/False based on valid input csv file
         ------------------------------------------------------------------------------------------------------
         """
         file_ext = self.file_path.split(".")[-1]
         if file_ext == self.expected_file_ext:
             return True
         return False
-            
+
     def _is_valid_headers(self) -> bool:
         """
         ------------------------------------------------------------------------------------------------------
@@ -109,7 +121,7 @@ class CSVValidation():
         Function: _is_valid_headers
 
         Description: Check if input CSV has valid headers
-        
+
         Returns:
         ----------
         boolena: True/False based on input CSV headers
@@ -135,7 +147,7 @@ class CSVValidation():
         Parameters:
         ----------
         name: name of the project
-        
+
         Returns:
         ----------
         boolena: True/False based on valid project_name
@@ -145,7 +157,7 @@ class CSVValidation():
         if name:
             return True, None
         return False, f"Invalid {self.project_name} formatting"
-    
+
     def _is_file_path_valid(self, file_path: str) -> Tuple[bool, str]:
         """
         ------------------------------------------------------------------------------------------------------
@@ -158,7 +170,7 @@ class CSVValidation():
         Parameters:
         ----------
         file_path: A string of file path
-        
+
         Returns:
         ----------
         boolena: True/False based on valid file_path
@@ -181,7 +193,7 @@ class CSVValidation():
         Parameters:
         ----------
         workflow_tags: A comma separated string of workflow tags
-        
+
         Returns:
         ----------
         boolena: True/False based on valid workflow_tags
@@ -190,10 +202,13 @@ class CSVValidation():
         """
         tags = workflow_tags.split(",")
         for tag in tags:
-            if not(tag in self.workflow_tags or tag.startswith(tuple(self.dynamic_workflow_tags))):
+            if not (
+                tag in self.workflow_tags
+                or tag.startswith(tuple(self.dynamic_workflow_tags))
+            ):
                 return False, f"Invalid {self.tags} formatting"
         return True, None
-    
+
     def _is_pt_id_external_valid(self, pt_id_ext: str) -> Tuple[bool, str]:
         """
         ------------------------------------------------------------------------------------------------------
@@ -206,7 +221,7 @@ class CSVValidation():
         Parameters:
         ----------
         pt_id_ext: A string of pt_id_external
-        
+
         Returns:
         ----------
         boolena: True/False based on valid pt_id_ext
@@ -216,7 +231,7 @@ class CSVValidation():
         if pt_id_ext:
             return True, None
         return False, f"Invalid {self.pt_id_external} formatting"
-    
+
     def _is_time_collected_valid(self, collect_time: str) -> Tuple[bool, str]:
         """
         ------------------------------------------------------------------------------------------------------
@@ -229,7 +244,7 @@ class CSVValidation():
         Parameters:
         ----------
         collect_time: A string to collect_time (YYYY-MM-DD)
-        
+
         Returns:
         ----------
         boolena: True/False based on valid collect_time
@@ -241,7 +256,6 @@ class CSVValidation():
         if collect_time and bool(re.match(self.collect_time_format, collect_time)):
             return True, None
         return False, f"Invalid {self.time_collected} formatting"
-    
 
     def validate_row(self, row) -> Tuple[bool, str]:
         """
@@ -255,7 +269,7 @@ class CSVValidation():
         Parameters:
         ----------
         row: A row of a dataframe
-        
+
         Returns:
         ----------
         boolena: True/False based on valid row
@@ -263,20 +277,27 @@ class CSVValidation():
         ------------------------------------------------------------------------------------------------------
         """
         is_valid_project, error = self._is_project_name_valid(row[self.project_name])
-        if error: return (is_valid_project, error)
+        if error:
+            return (is_valid_project, error)
 
-        is_valid_file, error = self._is_file_path_valid(row[self.upload_file_path]) 
-        if error: return (is_valid_file, error)
-        
+        is_valid_file, error = self._is_file_path_valid(row[self.upload_file_path])
+        if error:
+            return (is_valid_file, error)
+
         is_valid_wft, error = self._is_workflow_tags_valid(row[self.tags])
-        if error: return (is_valid_wft, error)
-        
+        if error:
+            return (is_valid_wft, error)
+
         is_valid_pt_id, error = self._is_pt_id_external_valid(row[self.pt_id_external])
-        if error: return (is_valid_pt_id, error)
-        
-        is_valid_collect_time, error = self._is_time_collected_valid(row[self.time_collected])
-        if error: return (is_valid_collect_time, error)
-        
+        if error:
+            return (is_valid_pt_id, error)
+
+        is_valid_collect_time, error = self._is_time_collected_valid(
+            row[self.time_collected]
+        )
+        if error:
+            return (is_valid_collect_time, error)
+
         return True, None
 
     def get_filename(self) -> str:
@@ -287,7 +308,7 @@ class CSVValidation():
         Function: get_filename
 
         Description: This function returns the name of the file
-        
+
         Returns:
         ----------
         filename: filename of class object instance (str)
@@ -303,7 +324,7 @@ class CSVValidation():
         Function: get_dataframe
 
         Description: This function returns the dataframe
-        
+
         Returns:
         ----------
         df: df of class object instance (pd.DataFrame)
