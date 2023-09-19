@@ -11,6 +11,9 @@ from willisapi_client.services.exceptions import (
     InvalidCSVColumns,
 )
 from willisapi_client.logging_setup import logger as logger
+from willisapi_client.services.upload.language_choices import (
+    LANGUAGE_CHOICES,
+)
 
 
 class CSVValidation:
@@ -257,6 +260,31 @@ class CSVValidation:
             return True, None
         return False, f"Invalid {self.time_collected} formatting"
 
+    def _is_language_valid(self, language: str) -> Tuple[bool, str]:
+        """
+        ------------------------------------------------------------------------------------------------------
+        Class: CSVValidation
+
+        Function: _is_language_valid
+
+        Description: Check if language is valid
+
+        Parameters:
+        ----------
+        language: A language string
+
+        Returns:
+        ----------
+        boolean: True/False based on valid collect_time
+        error: A str error message if langauge is invalid
+        ------------------------------------------------------------------------------------------------------
+        """
+        if language == None:
+            return (True, None)
+        if language and (language, language) in LANGUAGE_CHOICES:
+            return (True, None)
+        return (False, f"Invalid {self.language} formatting")
+
     def validate_row(self, row) -> Tuple[bool, str]:
         """
         ------------------------------------------------------------------------------------------------------
@@ -297,6 +325,10 @@ class CSVValidation:
         )
         if error:
             return (is_valid_collect_time, error)
+
+        is_valid_language, error = self._is_language_valid(row[self.language])
+        if error:
+            row[self.language] = None
 
         return True, None
 
