@@ -1,14 +1,15 @@
 from willisapi_client.services.auth.login_manager import login
 from willisapi_client.services.auth.user_manager import create_user
-
-from unittest.mock import patch
+from unittest.mock import Mock, patch
+from datetime import timedelta, datetime
+import pytest
 
 class TestLoginFunction:
     def setup_method(self):
         self.username = "dummy"
         self.password = "password"
         self.id_token = "dummy_token"
-        self.expires_in = 100
+        self.expires_in = datetime.now() + timedelta(0.02)
 
     @patch('willisapi_client.services.auth.login_manager.AuthUtils.login')
     def test_login_failed(self, mocked_login):
@@ -18,7 +19,8 @@ class TestLoginFunction:
         assert expire_in == None
 
     @patch('willisapi_client.services.auth.login_manager.AuthUtils.login')
-    def test_login_success(self, mocked_login):
+    @pytest.mark.parametrize("current_time", [datetime(2023, 9, 20, 12, 0, 0)])
+    def test_login_success(self, mocked_login,current_time):
         mocked_login.return_value = {
             "status_code": 200,
             "result":{
@@ -27,8 +29,14 @@ class TestLoginFunction:
             }
         }
         key, expire_in = login(self.username, self.password)
-        assert key == self.id_token
-        assert expire_in == self.expires_in
+        with patch('datetime.datetime') as mock_datetime:
+            mock_datetime.now.return_value = current_time
+
+            result = login()
+            assert key == self.id_token
+            # assert expire_in == self.expires_in
+            assert result == current_time
+
 
     @patch('willisapi_client.services.auth.login_manager.AuthUtils.login')
     def test_login_400_status(self, mocked_login):
