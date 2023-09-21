@@ -50,7 +50,7 @@ class TestCSVValidation:
             "workflow_tags": "speech_characteristics",
             "pt_id_external": "qwerty",
             "time_collected": "2023-02-02",
-            "language": "wjhg",
+            "language": "en-US",
         }
         is_valid, _ = csv.validate_row(row)
         assert is_valid == True
