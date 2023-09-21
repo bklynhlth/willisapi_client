@@ -8,6 +8,7 @@ from willisapi_client.services.download.download_utils import DownloadUtils
 from willisapi_client.logging_setup import logger as logger
 from willisapi_client.timer import measure
 
+
 @measure
 def download(key: str, project_name: str, **kwargs):
     """
@@ -27,10 +28,10 @@ def download(key: str, project_name: str, **kwargs):
     ---------------------------------------------------------------------------------------------------
     """
 
-    wc = WillisapiClient(env = kwargs.get('env'))
+    wc = WillisapiClient(env=kwargs.get("env"))
     url = wc.get_download_url() + f"?project_name={project_name}"
     headers = wc.get_headers()
-    headers['Authorization'] = key
+    headers["Authorization"] = key
     logger.info(f'{datetime.now().strftime("%H:%M:%S")}: Download started')
     logger.info(f'{datetime.now().strftime("%H:%M:%S")}: Download is in progress')
     response = DownloadUtils.request(url, headers, try_number=1)
