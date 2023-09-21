@@ -328,7 +328,7 @@ class CSVValidation:
 
         is_valid_language, error = self._is_language_valid(row[self.language])
         if error:
-            row[self.language] = None
+            return (is_valid_language, error)
 
         return True, None
 
