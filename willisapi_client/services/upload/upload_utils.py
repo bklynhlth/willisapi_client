@@ -129,6 +129,7 @@ class UploadUtils:
             workflow_tags=row.workflow_tags,
             pt_id_external=row.pt_id_external,
             filename=pathlib.Path(row.file_path).name,
+            language=row.language,
         )
         if row.time_collected:
             data["time_collected"] = row.time_collected
