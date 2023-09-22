@@ -55,7 +55,7 @@ class TestUpload:
         mock_valid_csv.return_value = True
         mocked_df.return_value = pd.DataFrame([self.df_row], columns=self.df_cols)
         mock_row_validation.return_value = True, None
-        mocked_upload.return_value = True
+        mocked_upload.return_value = True, None
         df = upload(self.key, self.metadata)
         num = len(df[df["upload_status"] == "success"])
         assert num == 1
@@ -76,7 +76,7 @@ class TestUpload:
         mock_valid_csv.return_value = True
         mocked_df.return_value = pd.DataFrame([self.df_row], columns=self.df_cols)
         mock_row_validation.return_value = True, None
-        mocked_upload.return_value = True
+        mocked_upload.return_value = True, None
         df = upload(self.key, self.metadata, reupload="force")
         num = len(df[df["upload_status"] == "success"])
         assert num == 1

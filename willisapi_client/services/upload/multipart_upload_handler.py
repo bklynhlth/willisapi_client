@@ -42,11 +42,13 @@ def upload(key, data, **kwargs):
         for index, row in tqdm(dataframe.iterrows(), total=dataframe.shape[0]):
             (is_valid_row, error) = csv.validate_row(row)
             if is_valid_row:
-                uploaded = UploadUtils.upload(index, row, url, headers, reupload)
+                (uploaded, error) = UploadUtils.upload(
+                    index, row, url, headers, reupload
+                )
                 if uploaded:
                     summary.append([row.file_path, "success", None])
                 else:
-                    summary.append([row.file_path, "fail", None])
+                    summary.append([row.file_path, "fail", error])
             else:
                 summary.append([row.file_path, "fail", error])
 
