@@ -9,8 +9,9 @@ from willisapi_client.services.upload.upload_utils import UploadUtils
 from willisapi_client.logging_setup import logger as logger
 from willisapi_client.timer import measure
 
+
 @measure
-def upload(key, data):
+def upload(key, data, **kwargs):
     """
     ---------------------------------------------------------------------------------------------------
     Function: upload
@@ -31,25 +32,30 @@ def upload(key, data):
     if csv._is_valid():
         logger.info(f'{datetime.now().strftime("%H:%M:%S")}: csv check passed')
         dataframe = csv.get_dataframe()
-        wc = WillisapiClient()
+        wc = WillisapiClient(env=kwargs.get("env"))
+        reupload = "true" if kwargs.get("reupload") == "force" else "false"
         url = wc.get_upload_url()
         headers = wc.get_headers()
-        headers['Authorization'] = key
+        headers["Authorization"] = key
         summary = []
         logger.info(f'{datetime.now().strftime("%H:%M:%S")}: beginning upload')
         for index, row in tqdm(dataframe.iterrows(), total=dataframe.shape[0]):
             (is_valid_row, error) = csv.validate_row(row)
             if is_valid_row:
-                uploaded = UploadUtils.upload(index, row, url, headers)
+                (uploaded, error) = UploadUtils.upload(
+                    index, row, url, headers, reupload
+                )
                 if uploaded:
                     summary.append([row.file_path, "success", None])
                 else:
-                    summary.append([row.file_path, "fail", None])
+                    summary.append([row.file_path, "fail", error])
             else:
                 summary.append([row.file_path, "fail", error])
 
-        res_df = pd.DataFrame(summary, columns=['filename', 'upload_status', 'upload_message'])
-        number_of_files_uploaded = len(res_df[res_df['upload_status']=="success"])
-        number_of_files_failed = len(res_df[res_df['upload_status']=="fail"])
+        res_df = pd.DataFrame(
+            summary, columns=["filename", "upload_status", "upload_message"]
+        )
+        number_of_files_uploaded = len(res_df[res_df["upload_status"] == "success"])
+        number_of_files_failed = len(res_df[res_df["upload_status"] == "fail"])
         UploadUtils.summary_logs(number_of_files_uploaded, number_of_files_failed)
         return res_df

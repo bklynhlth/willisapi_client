@@ -1,14 +1,16 @@
 # website:   https://www.brooklyn.health
 from http import HTTPStatus
 import pandas as pd
+from datetime import datetime
 
 from willisapi_client.willisapi_client import WillisapiClient
 from willisapi_client.services.download.download_utils import DownloadUtils
 from willisapi_client.logging_setup import logger as logger
 from willisapi_client.timer import measure
 
+
 @measure
-def download(key: str, project_name: str):
+def download(key: str, project_name: str, **kwargs):
     """
     ---------------------------------------------------------------------------------------------------
     Function: download
@@ -26,10 +28,12 @@ def download(key: str, project_name: str):
     ---------------------------------------------------------------------------------------------------
     """
 
-    wc = WillisapiClient()
+    wc = WillisapiClient(env=kwargs.get("env"))
     url = wc.get_download_url() + f"?project_name={project_name}"
     headers = wc.get_headers()
-    headers['Authorization'] = key
+    headers["Authorization"] = key
+    logger.info(f'{datetime.now().strftime("%H:%M:%S")}: Download started')
+    logger.info(f'{datetime.now().strftime("%H:%M:%S")}: Download is in progress')
     response = DownloadUtils.request(url, headers, try_number=1)
     empty_response_df = pd.DataFrame()
     if "status_code" in response:
@@ -38,6 +42,7 @@ def download(key: str, project_name: str):
         if response["status_code"] == HTTPStatus.UNAUTHORIZED:
             logger.error("No access to project/data for download.")
         if response["status_code"] == HTTPStatus.OK:
+            logger.info(f'{datetime.now().strftime("%H:%M:%S")}: Download Complete')
             response_df, err = DownloadUtils.generate_response_df(response)
             if not err:
                 return response_df
