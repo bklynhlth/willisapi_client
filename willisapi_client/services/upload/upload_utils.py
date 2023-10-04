@@ -130,11 +130,11 @@ class UploadUtils:
             workflow_tags=row.workflow_tags,
             pt_id_external=row.pt_id_external,
             filename=pathlib.Path(row.file_path).name,
+            language=row.language,
         )
         if row.time_collected:
             data["time_collected"] = row.time_collected
-        if row.language:
-            data["language"] = row.language
+
         try:
             response = requests.post(
                 f"{url}?type=initiate&reupload={reupload}", json=data, headers=headers
