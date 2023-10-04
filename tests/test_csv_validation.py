@@ -151,7 +151,7 @@ class TestCSVValidation:
             "workflow_tags": "scale_abc,speech_transcription_dummy",
             "pt_id_external": "qwerty",
             "time_collected": "2023-02-02",
-            "language": None,
+            "language": "en-US",
         }
         is_valid, _ = csv.validate_row(row)
         assert is_valid == True
@@ -202,6 +202,58 @@ class TestCSVValidation:
             "workflow_tags": "speech_characteristics",
             "pt_id_external": "",
             "time_collected": "20-02-02",
+        }
+        is_valid, _ = csv.validate_row(row)
+        assert is_valid == False
+
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_valid_headers"
+    )
+    @patch("willisapi_client.services.upload.csv_validation.CSVValidation._is_file")
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_file_path_valid"
+    )
+    def test_csv_row_validation_failed_empty_language_code(
+        self, mocked_upload_file, mocked_file, mocked_headers
+    ):
+        mocked_headers.return_value = True
+        mocked_file.return_value = True
+        mocked_upload_file.return_value = (True, None)
+        csv = CSVValidation(file_path="/metadata.csv")
+        assert csv._is_valid() == True
+        row = {
+            "project_name": "project_name",
+            "file_path": "file.mp4",
+            "workflow_tags": "speech_characteristics",
+            "pt_id_external": "",
+            "time_collected": "20-02-02",
+            "language": None,
+        }
+        is_valid, _ = csv.validate_row(row)
+        assert is_valid == False
+
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_valid_headers"
+    )
+    @patch("willisapi_client.services.upload.csv_validation.CSVValidation._is_file")
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_file_path_valid"
+    )
+    def test_csv_row_validation_passed_non_empty_language_code(
+        self, mocked_upload_file, mocked_file, mocked_headers
+    ):
+        mocked_headers.return_value = True
+        mocked_file.return_value = True
+        mocked_upload_file.return_value = (True, None)
+        csv = CSVValidation(file_path="/metadata.csv")
+        assert csv._is_valid() == True
+        row = {
+            "project_name": "project_name",
+            "file_path": "file.mp4",
+            "workflow_tags": "speech_characteristics",
+            "pt_id_external": "",
+            "time_collected": "20-02-02",
+            "language": "random",
         }
         is_valid, _ = csv.validate_row(row)
         assert is_valid == False
