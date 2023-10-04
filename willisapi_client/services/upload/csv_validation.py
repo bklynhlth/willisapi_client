@@ -276,13 +276,11 @@ class CSVValidation:
 
         Returns:
         ----------
-        boolean: True/False based on valid collect_time
+        boolean: True/False based on valid language code
         error: A str error message if langauge is invalid
         ------------------------------------------------------------------------------------------------------
         """
-        if language == None:
-            return (True, None)
-        if language and language in LANGUAGE_CHOICES:
+        if language:
             return (True, None)
         return (False, f"Invalid {self.language} formatting")
 
