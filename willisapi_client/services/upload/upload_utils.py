@@ -162,6 +162,10 @@ class UploadUtils:
                     logger.error(
                         "Your Key is expired. Login again to generate a new key"
                     )
+                if "message" in res_json and res_json["message"] == "No credits are available to upload the project":
+                        logger.error(
+                        "Your group has exceeded the number of projects allocated to you"
+                    )
             return (None, None, error)
 
     def fetch_pre_signed_part_urls(
