@@ -84,3 +84,22 @@ class TestUpload:
         assert df.iloc[0].filename == "video.mp4"
         assert df.iloc[0].upload_status == "success"
         assert df.iloc[0].upload_message == None
+
+    @patch("willisapi_client.services.upload.upload_utils.UploadUtils.upload")
+    @patch("willisapi_client.services.upload.csv_validation.CSVValidation.validate_row")
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation.get_dataframe"
+    )
+    @patch("willisapi_client.services.upload.csv_validation.CSVValidation._is_valid")
+    def test_upload_failed_no_credits_available(
+        self, mock_valid_csv, mocked_df, mock_row_validation, mocked_upload
+    ):
+        mock_valid_csv.return_value = True
+        mocked_df.return_value = pd.DataFrame([self.df_row], columns=self.df_cols)
+        mock_row_validation.return_value = True, None
+        mocked_upload.return_value = False, "Your group has exceeded the number of projects allocated to you"
+        df = upload(self.key, self.metadata)
+        num = len(df[df["upload_status"] == "fail"])
+        assert num == 1
+        assert list(df.columns) == self.response_df_cols
+        assert df.iloc[0].upload_status == "fail"
