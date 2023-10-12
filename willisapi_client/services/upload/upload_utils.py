@@ -157,14 +157,17 @@ class UploadUtils:
                 ):
                     if res_json["message"] == "Data already present in DB":
                         error = "data is already available in our storage"
+
+                    if (
+                        "message" in res_json
+                        and res_json["message"]
+                        == "No credits are available to upload the project"
+                    ):
+                        error = "Your group has exceeded the number of projects allocated to you"
             else:
                 if "message" in res_json and res_json["message"] == "Unauthorized":
                     logger.error(
                         "Your Key is expired. Login again to generate a new key"
-                    )
-                if "message" in res_json and res_json["message"] == "No credits are available to upload the project":
-                        logger.error(
-                        "Your group has exceeded the number of projects allocated to you"
                     )
             return (None, None, error)
 
