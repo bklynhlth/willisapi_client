@@ -2,10 +2,15 @@
 
 import setuptools
 import os
+import sys
+import logging
 
 # Version details
 current_dir = os.path.abspath(os.path.dirname(__file__))
 details = {}
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 with open(os.path.join(current_dir, "willisapi_client", "__version__.py"), "r") as fv:
     exec(fv.read(), details)
 
@@ -19,19 +24,33 @@ with open("requirements.txt", "r") as fp:
     while "" in install_requires:
         install_requires.remove("")
 
-setuptools.setup(
-    name=details["__client__"],
-    version=details["__latestVersion__"],
-    description=details["__short_description__"],
-    long_description=long_description,
-    long_description_content_type=details["__content_type__"],
-    url=details["__url__"],
-    author="bklynhlth",
-    python_requires=">=3.9",
-    install_requires=install_requires,
-    author_email="admin@brooklyn.health",
-    packages=setuptools.find_packages(exclude=["tests*"]),
-    include_package_data=True,
-    zip_safe=False,
-    license="Apache",
-)
+
+def log_to_site_packages(message):
+    handler = logging.FileHandler(os.path.join(sys.base_prefix, 'site-packages', 'willisapi-client/willisapilogs.log'))
+    handler.setFormatter(logging.Formatter(' %(message)s'))
+    logger.addHandler(handler)
+    logger.info(message)
+
+
+if __name__ == '__main__':
+    try:
+        setuptools.setup(
+            name=details["__client__"],
+            version=details["__latestVersion__"],
+            description=details["__short_description__"],
+            long_description=long_description,
+            long_description_content_type=details["__content_type__"],
+            url=details["__url__"],
+            author="bklynhlth",
+            python_requires=">=3.9",
+            install_requires=install_requires,
+            author_email="admin@brooklyn.health",
+            packages=setuptools.find_packages(exclude=["tests*"]),
+            include_package_data=True,
+            zip_safe=False,
+            license="Apache",
+        )
+
+    except Exception as e:
+        log_to_site_packages('Failed to install willisapilogs: {}'.format(e))
+        sys.exit(1)
