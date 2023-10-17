@@ -8,11 +8,7 @@ import logging
 # Version details
 current_dir = os.path.abspath(os.path.dirname(__file__))
 log_file = os.path.join(current_dir, ".willisapilogs")
-
 details = {}
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
 with open(os.path.join(current_dir, "willisapi_client", "__version__.py"), "r") as fv:
     exec(fv.read(), details)
 
@@ -27,7 +23,7 @@ with open("requirements.txt", "r") as fp:
         install_requires.remove("")
 
 
-def pip_package_log(message):
+def pip_package_log():
     logging.basicConfig(
         filename=log_file,
         level=logging.CRITICAL,
