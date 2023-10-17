@@ -23,7 +23,7 @@ with open("requirements.txt", "r") as fp:
         install_requires.remove("")
 
 
-def pip_package_log():
+def willisapi_package_log():
     logging.basicConfig(
         filename=log_file,
         level=logging.CRITICAL,
@@ -52,5 +52,5 @@ if __name__ == "__main__":
         )
 
     except Exception as e:
-        pip_package_log("An error occurred: {}".format(e))
+        willisapi_package_log("An error occurred: {}".format(e))
         sys.exit(1)
