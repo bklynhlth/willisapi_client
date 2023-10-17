@@ -7,6 +7,8 @@ import logging
 
 # Version details
 current_dir = os.path.abspath(os.path.dirname(__file__))
+log_file = os.path.join(current_dir, ".willisapilogs")
+
 details = {}
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -25,14 +27,16 @@ with open("requirements.txt", "r") as fp:
         install_requires.remove("")
 
 
-def log_to_site_packages(message):
-    handler = logging.FileHandler(os.path.join(sys.base_prefix, 'site-packages', 'willisapi-client/willisapilogs.log'))
-    handler.setFormatter(logging.Formatter(' %(message)s'))
-    logger.addHandler(handler)
-    logger.info(message)
+def pip_package_log(message):
+    logging.basicConfig(
+        filename=log_file,
+        level=logging.CRITICAL,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+    )
+    logging.critical("An error occurred: %s", e)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         setuptools.setup(
             name=details["__client__"],
@@ -52,5 +56,5 @@ if __name__ == '__main__':
         )
 
     except Exception as e:
-        log_to_site_packages('Failed to install willisapilogs: {}'.format(e))
+        pip_package_log("An error occurred: {}".format(e))
         sys.exit(1)
