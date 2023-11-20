@@ -38,7 +38,7 @@ class CSVValidation:
         self.workflow_tags = [
             "vocal_acoustics",
             "speech_characteristics",
-            "speech_transcription",
+            "speech_transcription_aws",
             "voice_and_speech",
             "facial_expressivity",
             "emotional_expressivity",
@@ -48,10 +48,10 @@ class CSVValidation:
             "eye_blink_rate",
         ]
         self.dynamic_workflow_tags = [
-            "speech_transcription_",
+            "speech_transcription_aws_",
             "speaker_separation_",
             "scale_",
-            "rater_qa_",
+            "speech_characteristics_",
         ]
         self.collect_time_format = r"^\d{4}-\d{2}-\d{2}$"
         self.df = None
