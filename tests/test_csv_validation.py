@@ -148,7 +148,7 @@ class TestCSVValidation:
         row = {
             "project_name": "project_name",
             "file_path": "file.mp4",
-            "workflow_tags": "scale_abc,speech_transcription_dummy",
+            "workflow_tags": "scale_abc,speech_transcription_aws_dummy",
             "pt_id_external": "qwerty",
             "time_collected": "2023-02-02",
             "language": "en-US",
