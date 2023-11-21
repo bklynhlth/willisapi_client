@@ -38,7 +38,7 @@ class WillisapiClient:
         return f"https://{self.app_url}download"
 
     def get_create_account_url(self):
-        return self.get_base_url() + "create-group"
+        return self.get_base_url() + "create-account"
     
     def get_headers(self):
         return {"Content-Type": "application/json", "Accept": "application/json"}
