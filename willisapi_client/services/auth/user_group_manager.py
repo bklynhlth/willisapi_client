@@ -14,6 +14,23 @@ def create_account(
     client_name: str,
     **kwargs,
 ) -> str:
+    """
+    ---------------------------------------------------------------------------------------------------
+    Function: create_account
+
+    Description: This function to add users to the expected group using willis create account API
+
+    Parameters:
+    ----------
+    key: Admin access token
+    client_email: User's client email id
+    client_name: User's client name (group)
+
+    Returns:
+    ----------
+    status : Onboard succes/fail message (str/None)
+    ---------------------------------------------------------------------------------------------------
+    """
     wc = WillisapiClient(env=kwargs.get("env"))
     url = wc.get_create_account_url()
     headers = wc.get_headers()
@@ -22,7 +39,7 @@ def create_account(
         client_email=client_email,
         client_name=client_name,
     )
-    logger.info(f'{datetime.now().strftime("%H:%M:%S")}: Create account')
+    # logger.info(f'{datetime.now().strftime("%H:%M:%S")}: Creating account')
     response = AuthUtils.create_account(url, data, headers, try_number=1)
     if response and "status_code" in response:
         if response["status_code"] == HTTPStatus.BAD_REQUEST:
