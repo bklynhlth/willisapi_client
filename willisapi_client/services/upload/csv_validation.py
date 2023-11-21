@@ -46,12 +46,14 @@ class CSVValidation:
             "speaker_separation",
             "speech_characteristics_from_json",
             "eye_blink_rate",
+            "rater_qa",
         ]
         self.dynamic_workflow_tags = [
             "speech_transcription_aws_",
             "speaker_separation_",
             "scale_",
             "speech_characteristics_",
+            "rater_qa_",
         ]
         self.collect_time_format = r"^\d{4}-\d{2}-\d{2}$"
         self.df = None
