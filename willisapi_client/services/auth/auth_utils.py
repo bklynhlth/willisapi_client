@@ -89,3 +89,19 @@ class AuthUtils:
             return AuthUtils.signup(url, data, headers, try_number=try_number + 1)
         else:
             return res_json
+
+    @staticmethod
+    def create_account(url, data, headers, try_number):
+        try:
+            response = requests.post(url, json=data, headers=headers)
+            res_json = response.json()
+        except (
+            requests.exceptions.ConnectionError,
+            json.decoder.JSONDecodeError,
+        ) as ex:
+            if try_number == 3:
+                raise UnableToOnboardClientError
+            time.sleep(random.random() * 2)
+            return AuthUtils.create_account(url, data, headers, try_number)
+        else:
+            return res_json
