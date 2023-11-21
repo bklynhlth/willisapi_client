@@ -92,6 +92,30 @@ class AuthUtils:
 
     @staticmethod
     def create_account(url, data, headers, try_number):
+        """
+        ------------------------------------------------------------------------------------------------------
+        Class: AuthUtils
+
+        Function: create_account
+
+        Description: This is an internal create_account function which makes a POST API call to the brooklyn.health API server.
+
+        Parameters:
+        ----------
+        url: The URL of the API endpoint.
+        data: The data to be sent in the request body.
+        headers: The headers to be sent in the request.
+        try_number: The number of times the function has been tried.
+
+        Returns:
+        ----------
+        json: The JSON response from the API server.
+
+        Raises:
+        ----------
+        UnableToOnboardClientError: If the function fails to signup after 3 tries.
+        ------------------------------------------------------------------------------------------------------
+        """
         try:
             response = requests.post(url, json=data, headers=headers)
             res_json = response.json()
