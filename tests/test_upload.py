@@ -97,7 +97,7 @@ class TestUpload:
         mock_valid_csv.return_value = True
         mocked_df.return_value = pd.DataFrame([self.df_row], columns=self.df_cols)
         mock_row_validation.return_value = True, None
-        mocked_upload.return_value = False, "Your group has exceeded the number of projects allocated to you"
+        mocked_upload.return_value = False, "Your account is using all allocated projects; further projects cannot be created."
         df = upload(self.key, self.metadata)
         num = len(df[df["upload_status"] == "fail"])
         assert num == 1

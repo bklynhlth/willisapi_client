@@ -144,6 +144,7 @@ class UploadUtils:
             pass
         else:
             error = None
+            project_limit_error = "Your account is using all allocated projects; further projects cannot be created."
             if "status_code" in res_json:
                 if res_json["status_code"] == HTTPStatus.OK:
                     if index == 0:
@@ -157,13 +158,12 @@ class UploadUtils:
                 ):
                     if res_json["message"] == "Data already present in DB":
                         error = "data is already available in our storage"
-
                     if (
                         "message" in res_json
-                        and res_json["message"]
-                        == "No credits are available to upload the project"
+                        and res_json["message"] == project_limit_error
                     ):
-                        error = "Your group has exceeded the number of projects allocated to you"
+                        error = project_limit_error
+                        logger.error(error)
             else:
                 if "message" in res_json and res_json["message"] == "Unauthorized":
                     logger.error(
