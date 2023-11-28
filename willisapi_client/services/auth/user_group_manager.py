@@ -52,7 +52,8 @@ def create_account(
         if response["status_code"] == HTTPStatus.NOT_FOUND:
             # No user in cognito
             logger.error("User not found")
-        if response["message"] == "User added in group":
+
+        if response["status_code"] == HTTPStatus.OK:
             logger.info(
                 f'{datetime.now().strftime("%H:%M:%S")}: User added to the group successfully'
             )
