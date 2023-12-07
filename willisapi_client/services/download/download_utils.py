@@ -247,7 +247,8 @@ class DownloadUtils:
                         axis=1,
                     )
                     response_df = response_df._append(df, ignore_index=True)
-            # response_df = response_df.drop(["stats"], axis=1)
+            if "stats" in response_df.columns:
+                response_df = response_df.drop(["stats"], axis=1)
         except Exception as ex:
             return None, f"{ex}"
         else:
