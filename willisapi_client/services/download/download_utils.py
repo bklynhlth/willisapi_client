@@ -176,8 +176,8 @@ class DownloadUtils:
                 if workflow_tag in [
                     vocal_acoustic_summary,
                     speech_characteristics_summary,
-                    eye_blinks_summary,
                     rater_qa_summary,
+                    eye_blinks_summary,
                 ]:
                     return pd.read_json(json.dumps(measures_dict[workflow_tag][0]))
         return pd.DataFrame()
@@ -220,6 +220,7 @@ class DownloadUtils:
                         [[project_name, pt_id_ext, filename, time_collected]],
                         columns=DownloadUtils._get_defined_columns(),
                     )
+
                     emotional_expressivity_summary_df = (
                         DownloadUtils._get_summary_df_from_json(
                             response, pt, rec, emotional_expressivity_summary
@@ -240,10 +241,11 @@ class DownloadUtils:
                             response, pt, rec, speech_characteristics_summary
                         )
                     )
-                    eye_blinks_summary = DownloadUtils._get_summary_df_from_json(
+
+                    eye_blinks_summary_df = DownloadUtils._get_summary_df_from_json(
                         response, pt, rec, eye_blinks_summary
                     )
-                    rater_qa_summary = DownloadUtils._get_summary_df_from_json(
+                    rater_qa_summary_df = DownloadUtils._get_summary_df_from_json(
                         response, pt, rec, rater_qa_summary
                     )
                     df = pd.concat(
@@ -253,8 +255,8 @@ class DownloadUtils:
                             facial_expressivity_summary_df,
                             vocal_acoustics_summary_df,
                             speech_characteristics_summary_df,
-                            eye_blinks_summary,
-                            rater_qa_summary,
+                            eye_blinks_summary_df,
+                            rater_qa_summary_df,
                         ],
                         axis=1,
                     )
