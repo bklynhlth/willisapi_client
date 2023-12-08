@@ -9,6 +9,8 @@ emotional_expressivity_summary = "emotional_expressivity_summary"
 facial_expressivity_summary = "facial_expressivity_summary"
 vocal_acoustic_summary = "vocal_acoustic_summary"
 speech_characteristics_summary = "speech_characteristics_summary"
+rater_qa_summary = "rater_qa_summary"
+eye_blinks_summary = "eye_blinks_summary"
 
 
 class DownloadUtils:
@@ -174,6 +176,8 @@ class DownloadUtils:
                 if workflow_tag in [
                     vocal_acoustic_summary,
                     speech_characteristics_summary,
+                    eye_blinks_summary,
+                    rater_qa_summary,
                 ]:
                     return pd.read_json(json.dumps(measures_dict[workflow_tag][0]))
         return pd.DataFrame()
@@ -236,6 +240,12 @@ class DownloadUtils:
                             response, pt, rec, speech_characteristics_summary
                         )
                     )
+                    eye_blinks_summary = DownloadUtils._get_summary_df_from_json(
+                        response, pt, rec, eye_blinks_summary
+                    )
+                    rater_qa_summary = DownloadUtils._get_summary_df_from_json(
+                        response, pt, rec, rater_qa_summary
+                    )
                     df = pd.concat(
                         [
                             main_df,
@@ -243,6 +253,8 @@ class DownloadUtils:
                             facial_expressivity_summary_df,
                             vocal_acoustics_summary_df,
                             speech_characteristics_summary_df,
+                            eye_blinks_summary,
+                            rater_qa_summary,
                         ],
                         axis=1,
                     )
