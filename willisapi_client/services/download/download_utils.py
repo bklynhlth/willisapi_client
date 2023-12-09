@@ -7,7 +7,7 @@ from typing import Tuple
 
 emotional_expressivity_summary = "emotional_expressivity_summary"
 facial_expressivity_summary = "facial_expressivity_summary"
-vocal_acoustic_summary = "vocal_acoustic_summary"
+vocal_acoustic_summary = "vocal_acoustics_summary"
 speech_characteristics_summary = "speech_characteristics_summary"
 rater_qa_summary = "rater_qa_summary"
 eye_blinks_summary = "eye_blink_rate_summary"
