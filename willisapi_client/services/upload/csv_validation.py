@@ -5,16 +5,13 @@ import pathlib
 import re
 from typing import Tuple
 
-from willisapi_client.services.exceptions import (
-    InvalidFileType,
-    InvalidFilePath,
-    InvalidCSVColumns,
-)
 from willisapi_client.logging_setup import logger as logger
 from willisapi_client.services.upload.language_choices import (
     LANGUAGE_CHOICES,
     English_us,
 )
+from dateutil.parser import parse, ParserError
+from datetime import datetime
 
 
 class CSVValidation:
@@ -257,11 +254,16 @@ class CSVValidation:
         error: A str error message if collect_time is invalid
         ------------------------------------------------------------------------------------------------------
         """
-        if collect_time == None:
-            return True, None
-        if collect_time and bool(re.match(self.collect_time_format, collect_time)):
-            return True, None
-        return False, f"Invalid {self.time_collected} formatting"
+        date_pattern = re.compile(self.collect_time_format)
+        if collect_time and date_pattern.match(collect_time):
+            try:
+                date = parse(collect_time)
+            except ParserError:
+                return False, f"Invalid {self.time_collected} formatting"
+            else:
+                if date > datetime.now():
+                    return False, f"Invalid {self.time_collected} formatting"
+        return True, None
 
     def _is_language_valid(self, language: str) -> Tuple[bool, str]:
         """
