@@ -106,7 +106,7 @@ class TestLoginFunction:
             self.client_name,
         )
         print(result)
-        assert result == None
+        assert result == "Python error"
 
     @patch("willisapi_client.services.auth.user_group_manager.AuthUtils.create_account")
     def test_create_account_failed_401_status(self, mocked_create_account):
@@ -120,7 +120,7 @@ class TestLoginFunction:
             self.client_name,
         )
         print(result)
-        assert result == None
+        assert result == "Not an Admin User"
 
     @patch("willisapi_client.services.auth.user_group_manager.AuthUtils.create_account")
     def test_create_account_failed_409_status(self, mocked_create_account):
@@ -134,7 +134,7 @@ class TestLoginFunction:
             self.client_name,
         )
         print(result)
-        assert result == None
+        assert result == "User already exists or already in some group"
 
     @patch("willisapi_client.services.auth.user_group_manager.AuthUtils.create_account")
     def test_create_account_failed_404_status(self, mocked_create_account):
@@ -148,4 +148,4 @@ class TestLoginFunction:
             self.client_name,
         )
         print(result)
-        assert result == None
+        assert result == "User not found"
