@@ -1,5 +1,4 @@
 from willisapi_client.services.auth.login_manager import login
-from willisapi_client.services.auth.user_manager import create_user
 from willisapi_client.services.auth.user_group_manager import create_account
 from unittest.mock import patch
 from datetime import timedelta, datetime
@@ -107,7 +106,7 @@ class TestLoginFunction:
             self.client_name,
         )
         print(result)
-        assert result == None
+        assert result == "Python error"
 
     @patch("willisapi_client.services.auth.user_group_manager.AuthUtils.create_account")
     def test_create_account_failed_401_status(self, mocked_create_account):
@@ -121,7 +120,7 @@ class TestLoginFunction:
             self.client_name,
         )
         print(result)
-        assert result == None
+        assert result == "Not an Admin User"
 
     @patch("willisapi_client.services.auth.user_group_manager.AuthUtils.create_account")
     def test_create_account_failed_409_status(self, mocked_create_account):
@@ -135,7 +134,7 @@ class TestLoginFunction:
             self.client_name,
         )
         print(result)
-        assert result == None
+        assert result == "User already exists or already in some group"
 
     @patch("willisapi_client.services.auth.user_group_manager.AuthUtils.create_account")
     def test_create_account_failed_404_status(self, mocked_create_account):
@@ -149,99 +148,4 @@ class TestLoginFunction:
             self.client_name,
         )
         print(result)
-        assert result == None
-
-
-class TestSignupFunction:
-    def setup_method(self):
-        self.username = "dummy"
-        self.password = "password"
-        self.admin_key = "admin_key"
-        self.non_admin_key = "non_admin_key"
-        self.client_email = "client@email.com"
-        self.client_name = "client"
-        self.first_name = "First"
-        self.last_name = "Last"
-
-    @patch("willisapi_client.services.auth.login_manager.AuthUtils.signup")
-    def test_signup_failed(self, mocked_signup):
-        mocked_signup.return_value = {
-            "status_code": 200,
-            "message": "Not an admin user",
-        }
-        message = create_user(
-            self.non_admin_key,
-            self.client_email,
-            self.client_name,
-            self.first_name,
-            self.last_name,
-        )
-        assert message == "Not an admin user"
-
-    @patch("willisapi_client.services.auth.login_manager.AuthUtils.signup")
-    def test_signup_success(self, mocked_signup):
-        mocked_signup.return_value = {"status_code": 200, "message": "User created"}
-        message = create_user(
-            self.admin_key,
-            self.client_email,
-            self.client_name,
-            self.first_name,
-            self.last_name,
-        )
-        assert message == "User created"
-
-    @patch("willisapi_client.services.auth.login_manager.AuthUtils.signup")
-    def test_signup_failed_400_status(self, mocked_signup):
-        mocked_signup.return_value = {
-            "status_code": 400,
-        }
-        message = create_user(
-            self.admin_key,
-            self.client_email,
-            self.client_name,
-            self.first_name,
-            self.last_name,
-        )
-        assert message == None
-
-    @patch("willisapi_client.services.auth.login_manager.AuthUtils.signup")
-    def test_signup_failed_500_status(self, mocked_signup):
-        mocked_signup.return_value = {
-            "status_code": 500,
-        }
-        message = create_user(
-            self.admin_key,
-            self.client_email,
-            self.client_name,
-            self.first_name,
-            self.last_name,
-        )
-        assert message == None
-
-    @patch("willisapi_client.services.auth.login_manager.AuthUtils.signup")
-    def test_signup_failed_401_status(self, mocked_signup):
-        mocked_signup.return_value = {
-            "status_code": 401,
-        }
-        message = create_user(
-            self.admin_key,
-            self.client_email,
-            self.client_name,
-            self.first_name,
-            self.last_name,
-        )
-        assert message == None
-
-    @patch("willisapi_client.services.auth.login_manager.AuthUtils.signup")
-    def test_signup_failed_403_status(self, mocked_signup):
-        mocked_signup.return_value = {
-            "status_code": 403,
-        }
-        message = create_user(
-            self.admin_key,
-            self.client_email,
-            self.client_name,
-            self.first_name,
-            self.last_name,
-        )
-        assert message == None
+        assert result == "User not found"

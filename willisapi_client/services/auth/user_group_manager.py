@@ -61,7 +61,7 @@ def create_account(
             logger.info(
                 f'{datetime.now().strftime("%H:%M:%S")}: User already present in the group'
             )
-            return response["message"]
+        return response["message"]
     else:
         logger.error(f"Login Failed")
         return None

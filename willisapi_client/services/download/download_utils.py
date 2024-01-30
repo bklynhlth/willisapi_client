@@ -5,12 +5,9 @@ import random
 import pandas as pd
 from typing import Tuple
 
-emotional_expressivity_summary = "emotional_expressivity_summary"
-facial_expressivity_summary = "facial_expressivity_summary"
 vocal_acoustic_summary = "vocal_acoustics_summary"
 speech_characteristics_summary = "speech_characteristics_summary"
 rater_qa_summary = "rater_qa_summary"
-eye_blinks_summary = "eye_blink_rate_summary"
 
 
 class DownloadUtils:
@@ -164,22 +161,17 @@ class DownloadUtils:
         measures_dict = response["items"]["project"]["participant"][pt]["results"][rec][
             "measures"
         ]
-        if workflow_tag in measures_dict:
-            if measures_dict[workflow_tag]:
-                if workflow_tag in [
-                    emotional_expressivity_summary,
-                    facial_expressivity_summary,
-                ]:
-                    return pd.read_json(
-                        json.dumps(measures_dict[workflow_tag][0])
-                    ).head(1)
-                if workflow_tag in [
-                    vocal_acoustic_summary,
-                    speech_characteristics_summary,
-                    rater_qa_summary,
-                    eye_blinks_summary,
-                ]:
-                    return pd.read_json(json.dumps(measures_dict[workflow_tag][0]))
+        if (
+            workflow_tag in measures_dict
+            and measures_dict[workflow_tag]
+            and workflow_tag
+            in [
+                vocal_acoustic_summary,
+                speech_characteristics_summary,
+                rater_qa_summary,
+            ]
+        ):
+            return pd.read_json(json.dumps(measures_dict[workflow_tag][0]))
         return pd.DataFrame()
 
     def generate_response_df(response) -> Tuple[pd.DataFrame, str]:
@@ -221,16 +213,6 @@ class DownloadUtils:
                         columns=DownloadUtils._get_defined_columns(),
                     )
 
-                    emotional_expressivity_summary_df = (
-                        DownloadUtils._get_summary_df_from_json(
-                            response, pt, rec, emotional_expressivity_summary
-                        )
-                    )
-                    facial_expressivity_summary_df = (
-                        DownloadUtils._get_summary_df_from_json(
-                            response, pt, rec, facial_expressivity_summary
-                        )
-                    )
                     vocal_acoustics_summary_df = (
                         DownloadUtils._get_summary_df_from_json(
                             response, pt, rec, vocal_acoustic_summary
@@ -241,21 +223,14 @@ class DownloadUtils:
                             response, pt, rec, speech_characteristics_summary
                         )
                     )
-
-                    eye_blinks_summary_df = DownloadUtils._get_summary_df_from_json(
-                        response, pt, rec, eye_blinks_summary
-                    )
                     rater_qa_summary_df = DownloadUtils._get_summary_df_from_json(
                         response, pt, rec, rater_qa_summary
                     )
                     df = pd.concat(
                         [
                             main_df,
-                            emotional_expressivity_summary_df,
-                            facial_expressivity_summary_df,
                             vocal_acoustics_summary_df,
                             speech_characteristics_summary_df,
-                            eye_blinks_summary_df,
                             rater_qa_summary_df,
                         ],
                         axis=1,
