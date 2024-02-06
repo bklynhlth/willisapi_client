@@ -275,3 +275,310 @@ class TestCSVValidation:
         }
         is_valid, _ = csv.validate_row(row)
         assert is_valid == False
+
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_valid_headers"
+    )
+    @patch("willisapi_client.services.upload.csv_validation.CSVValidation._is_file")
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_file_path_valid"
+    )
+    def test_csv_row_validation_failed_incorrect_age(
+        self, mocked_upload_file, mocked_file, mocked_headers
+    ):
+        mocked_headers.return_value = True
+        mocked_file.return_value = True
+        mocked_upload_file.return_value = (True, None)
+        csv = CSVValidation(file_path="/metadata.csv")
+        assert csv._is_valid() == True
+        row = {
+            "project_name": "project_name",
+            "file_path": "file.mp4",
+            "workflow_tags": "speech_characteristics",
+            "pt_id_external": "qwerty",
+            "time_collected": "2023-02-02",
+            "language": "en-US",
+            "age": 0,
+        }
+        is_valid, _ = csv.validate_row(row)
+        assert is_valid == False
+
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_valid_headers"
+    )
+    @patch("willisapi_client.services.upload.csv_validation.CSVValidation._is_file")
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_file_path_valid"
+    )
+    def test_csv_row_validation_failed_empty_sex_field(
+        self, mocked_upload_file, mocked_file, mocked_headers
+    ):
+        mocked_headers.return_value = True
+        mocked_file.return_value = True
+        mocked_upload_file.return_value = (True, None)
+        csv = CSVValidation(file_path="/metadata.csv")
+        assert csv._is_valid() == True
+        row = {
+            "project_name": "project_name",
+            "file_path": "file.mp4",
+            "workflow_tags": "speech_characteristics",
+            "pt_id_external": "qwerty",
+            "time_collected": "2023-02-02",
+            "language": "en-US",
+            "age": 30,
+            "sex": None,
+        }
+        is_valid, _ = csv.validate_row(row)
+        assert is_valid == False
+
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_valid_headers"
+    )
+    @patch("willisapi_client.services.upload.csv_validation.CSVValidation._is_file")
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_file_path_valid"
+    )
+    def test_csv_row_validation_failed_non_empty_sex_field(
+        self, mocked_upload_file, mocked_file, mocked_headers
+    ):
+        mocked_headers.return_value = True
+        mocked_file.return_value = True
+        mocked_upload_file.return_value = (True, None)
+        csv = CSVValidation(file_path="/metadata.csv")
+        assert csv._is_valid() == True
+        row = {
+            "project_name": "project_name",
+            "file_path": "file.mp4",
+            "workflow_tags": "speech_characteristics",
+            "pt_id_external": "qwerty",
+            "time_collected": "2023-02-02",
+            "language": "en-US",
+            "age": 30,
+            "sex": "O",
+        }
+        is_valid, _ = csv.validate_row(row)
+        assert is_valid == False
+
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_valid_headers"
+    )
+    @patch("willisapi_client.services.upload.csv_validation.CSVValidation._is_file")
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_file_path_valid"
+    )
+    def test_csv_row_validation_fail_empty_race(
+        self, mocked_upload_file, mocked_file, mocked_headers
+    ):
+        mocked_headers.return_value = True
+        mocked_file.return_value = True
+        mocked_upload_file.return_value = (True, "")
+        csv = CSVValidation(file_path="/metadata.csv")
+        assert csv._is_valid() == True
+        row = {
+            "project_name": "project_name",
+            "file_path": "/video.mp4",
+            "workflow_tags": "speech_characteristics",
+            "pt_id_external": "qwerty",
+            "time_collected": "2023-02-02",
+            "language": "en-US",
+            "age": 30,
+            "sex": "M",
+            "race": "",
+        }
+        is_valid, _ = csv.validate_row(row)
+        assert is_valid == False
+
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_valid_headers"
+    )
+    @patch("willisapi_client.services.upload.csv_validation.CSVValidation._is_file")
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_file_path_valid"
+    )
+    def test_csv_row_validation_fail_empty_study_arm(
+        self, mocked_upload_file, mocked_file, mocked_headers
+    ):
+        mocked_headers.return_value = True
+        mocked_file.return_value = True
+        mocked_upload_file.return_value = (True, "")
+        csv = CSVValidation(file_path="/metadata.csv")
+        assert csv._is_valid() == True
+        row = {
+            "project_name": "project_name",
+            "file_path": "/video.mp4",
+            "workflow_tags": "speech_characteristics",
+            "pt_id_external": "qwerty",
+            "time_collected": "2023-02-02",
+            "language": "en-US",
+            "age": 30,
+            "sex": "M",
+            "race": "Asian",
+            "study_arm": "",
+        }
+        is_valid, _ = csv.validate_row(row)
+        assert is_valid == False
+
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_valid_headers"
+    )
+    @patch("willisapi_client.services.upload.csv_validation.CSVValidation._is_file")
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_file_path_valid"
+    )
+    def test_csv_row_validation_fail_empty_clinical_score_a(
+        self, mocked_upload_file, mocked_file, mocked_headers
+    ):
+        mocked_headers.return_value = True
+        mocked_file.return_value = True
+        mocked_upload_file.return_value = (True, "")
+        csv = CSVValidation(file_path="/metadata.csv")
+        assert csv._is_valid() == True
+        row = {
+            "project_name": "project_name",
+            "file_path": "/video.mp4",
+            "workflow_tags": "speech_characteristics",
+            "pt_id_external": "qwerty",
+            "time_collected": "2023-02-02",
+            "language": "en-US",
+            "age": 30,
+            "sex": "M",
+            "race": "Asian",
+            "study_arm": "Study Arm",
+            "clinical_score_a": "",
+        }
+        is_valid, _ = csv.validate_row(row)
+        assert is_valid == False
+
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_valid_headers"
+    )
+    @patch("willisapi_client.services.upload.csv_validation.CSVValidation._is_file")
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_file_path_valid"
+    )
+    def test_csv_row_validation_fail_empty_clinical_score_b(
+        self, mocked_upload_file, mocked_file, mocked_headers
+    ):
+        mocked_headers.return_value = True
+        mocked_file.return_value = True
+        mocked_upload_file.return_value = (True, "")
+        csv = CSVValidation(file_path="/metadata.csv")
+        assert csv._is_valid() == True
+        row = {
+            "project_name": "project_name",
+            "file_path": "/video.mp4",
+            "workflow_tags": "speech_characteristics",
+            "pt_id_external": "qwerty",
+            "time_collected": "2023-02-02",
+            "language": "en-US",
+            "age": 30,
+            "sex": "M",
+            "race": "Asian",
+            "study_arm": "Study Arm",
+            "clinical_score_a": "Score A",
+            "clinical_score_b": "",
+        }
+        is_valid, _ = csv.validate_row(row)
+        assert is_valid == False
+
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_valid_headers"
+    )
+    @patch("willisapi_client.services.upload.csv_validation.CSVValidation._is_file")
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_file_path_valid"
+    )
+    def test_csv_row_validation_fail_empty_clinical_score_c(
+        self, mocked_upload_file, mocked_file, mocked_headers
+    ):
+        mocked_headers.return_value = True
+        mocked_file.return_value = True
+        mocked_upload_file.return_value = (True, "")
+        csv = CSVValidation(file_path="/metadata.csv")
+        assert csv._is_valid() == True
+        row = {
+            "project_name": "project_name",
+            "file_path": "/video.mp4",
+            "workflow_tags": "speech_characteristics",
+            "pt_id_external": "qwerty",
+            "time_collected": "2023-02-02",
+            "language": "en-US",
+            "age": 30,
+            "sex": "M",
+            "race": "Asian",
+            "study_arm": "Study Arm",
+            "clinical_score_a": "Score A",
+            "clinical_score_b": "Score B",
+            "clinical_score_c": "",
+        }
+        is_valid, _ = csv.validate_row(row)
+        assert is_valid == False
+
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_valid_headers"
+    )
+    @patch("willisapi_client.services.upload.csv_validation.CSVValidation._is_file")
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_file_path_valid"
+    )
+    def test_csv_row_validation_fail_empty_clinical_score_d(
+        self, mocked_upload_file, mocked_file, mocked_headers
+    ):
+        mocked_headers.return_value = True
+        mocked_file.return_value = True
+        mocked_upload_file.return_value = (True, "")
+        csv = CSVValidation(file_path="/metadata.csv")
+        assert csv._is_valid() == True
+        row = {
+            "project_name": "project_name",
+            "file_path": "/video.mp4",
+            "workflow_tags": "speech_characteristics",
+            "pt_id_external": "qwerty",
+            "time_collected": "2023-02-02",
+            "language": "en-US",
+            "age": 30,
+            "sex": "M",
+            "race": "Asian",
+            "study_arm": "Study Arm",
+            "clinical_score_a": "Score A",
+            "clinical_score_b": "Score B",
+            "clinical_score_c": "Score C",
+            "clinical_score_d": "",
+        }
+        is_valid, _ = csv.validate_row(row)
+        assert is_valid == False
+
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_valid_headers"
+    )
+    @patch("willisapi_client.services.upload.csv_validation.CSVValidation._is_file")
+    @patch(
+        "willisapi_client.services.upload.csv_validation.CSVValidation._is_file_path_valid"
+    )
+    def test_csv_row_validation_fail_empty_clinical_score_e(
+        self, mocked_upload_file, mocked_file, mocked_headers
+    ):
+        mocked_headers.return_value = True
+        mocked_file.return_value = True
+        mocked_upload_file.return_value = (True, "")
+        csv = CSVValidation(file_path="/metadata.csv")
+        assert csv._is_valid() == True
+        row = {
+            "project_name": "project_name",
+            "file_path": "/video.mp4",
+            "workflow_tags": "speech_characteristics",
+            "pt_id_external": "qwerty",
+            "time_collected": "2023-02-02",
+            "language": "en-US",
+            "age": 30,
+            "sex": "M",
+            "race": "Asian",
+            "study_arm": "Study Arm",
+            "clinical_score_a": "Score A",
+            "clinical_score_b": "Score B",
+            "clinical_score_c": "Score C",
+            "clinical_score_d": "Score C",
+            "clinical_score_e": "",
+        }
+        is_valid, _ = csv.validate_row(row)
+        assert is_valid == False
