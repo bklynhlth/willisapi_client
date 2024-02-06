@@ -9,6 +9,7 @@ from willisapi_client.logging_setup import logger as logger
 from willisapi_client.services.upload.language_choices import (
     LANGUAGE_CHOICES,
     English_us,
+    SEX_CHOICES,
 )
 from dateutil.parser import parse, ParserError
 from datetime import datetime
@@ -24,6 +25,15 @@ class CSVValidation:
         self.time_collected = "time_collected"
         self.upload_file_path = "file_path"
         self.language = "language"
+        self.age = "age"
+        self.sex = "sex"
+        self.race = "race"
+        self.study_arm = "study_arm"
+        self.clinical_score_a = "clinical_score_a"
+        self.clinical_score_b = "clinical_score_b"
+        self.clinical_score_c = "clinical_score_c"
+        self.clinical_score_d = "clinical_score_d"
+        self.clinical_score_e = "clinical_score_e"
         self.expected_headers = {
             self.project_name,
             self.upload_file_path,
@@ -31,6 +41,15 @@ class CSVValidation:
             self.pt_id_external,
             self.time_collected,
             self.language,
+            self.age,
+            self.sex,
+            self.race,
+            self.study_arm,
+            self.clinical_score_a,
+            self.clinical_score_b,
+            self.clinical_score_c,
+            self.clinical_score_d,
+            self.clinical_score_e,
         }
         self.workflow_tags = [
             "vocal_acoustics",
@@ -288,6 +307,214 @@ class CSVValidation:
             return (True, None)
         return (False, f"Invalid {self.language} formatting")
 
+    def _is_age_valid(self, age: int):
+        """
+        ------------------------------------------------------------------------------------------------------
+        Class: CSVValidation
+
+        Function: _is_age_valid
+
+        Description: Check if age is valid
+
+        Parameters:
+        ----------
+        language: A Age Integer
+
+        Returns:
+        ----------
+        boolean: True/False based on valid age
+        error: A str error message if age is invalid
+        ------------------------------------------------------------------------------------------------------
+        """
+        if age > 0:
+            return (True, None)
+        return (False, f"Invalid {self.age} formatting")
+
+    def _is_sex_valid(self, sex: str) -> Tuple[bool, str]:
+        """
+        ------------------------------------------------------------------------------------------------------
+        Class: CSVValidation
+
+        Function: _is_sex_valid
+
+        Description: Check if sex is valid
+
+        Parameters:
+        ----------
+        language: A Sex string
+
+        Returns:
+        ----------
+        boolean: True/False based on valid sex
+        error: A str error message if sex is invalid
+        ------------------------------------------------------------------------------------------------------
+        """
+        for choice in SEX_CHOICES:
+            if sex == choice[1]:
+                return (True, None)
+            return (False, f"Invalid {self.sex} formatting")
+
+    def _is_race_valid(self, race: str) -> Tuple[bool, str]:
+        """
+        ------------------------------------------------------------------------------------------------------
+        Class: CSVValidation
+
+        Function: _is_race_valid
+
+        Description: Check if race is valid
+
+        Parameters:
+        ----------
+        language: A Race String
+
+        Returns:
+        ----------
+        boolean: True/False based on valid race
+        error: A str error message if race is invalid
+        ------------------------------------------------------------------------------------------------------
+        """
+        if race:
+            return True, None
+        return False, f"Invalid {self.race} formatting"
+
+    def _is_study_arm_valid(self, study_arm: str) -> Tuple[bool, str]:
+        """
+        ------------------------------------------------------------------------------------------------------
+        Class: CSVValidation
+
+        Function: _is_study_arm_valid
+
+        Description: Check if study_arm is valid
+
+        Parameters:
+        ----------
+        language: A study_arm String
+
+        Returns:
+        ----------
+        boolean: True/False based on valid study_arm
+        error: A str error message if study_arm is invalid
+        ------------------------------------------------------------------------------------------------------
+        """
+        if study_arm:
+            return True, None
+        return False, f"Invalid {self.study_arm} formatting"
+
+    def _is_clinical_score_valid_a(self, clinical_score_a: str) -> Tuple[bool, str]:
+        """
+        ------------------------------------------------------------------------------------------------------
+        Class: CSVValidation
+
+        Function: _is_clinical_score_valid_a
+
+        Description: Check if clinical_score_a is valid
+
+        Parameters:
+        ----------
+        language: A clinical_score_a String
+
+        Returns:
+        ----------
+        boolean: True/False based on valid clinical_score_a
+        error: A str error message if clinical_score_a is invalid
+        ------------------------------------------------------------------------------------------------------
+        """
+        if clinical_score_a:
+            return True, None
+        return False, f"Invalid {self.clinical_score_a} formatting"
+
+    def _is_clinical_score_valid_b(self, clinical_score_b: str) -> Tuple[bool, str]:
+        """
+        ------------------------------------------------------------------------------------------------------
+        Class: CSVValidation
+
+        Function: _is_clinical_score_valid_b
+
+        Description: Check if clinical_score_b is valid
+
+        Parameters:
+        ----------
+        language: A clinical_score_b String
+
+        Returns:
+        ----------
+        boolean: True/False based on valid clinical_score_b
+        error: A str error message if clinical_score_b is invalid
+        ------------------------------------------------------------------------------------------------------
+        """
+        if clinical_score_b:
+            return True, None
+        return False, f"Invalid {self.clinical_score_b} formatting"
+
+    def _is_clinical_score_valid_c(self, clinical_score_c: str) -> Tuple[bool, str]:
+        """
+        ------------------------------------------------------------------------------------------------------
+        Class: CSVValidation
+
+        Function: _is_clinical_score_valid_c
+
+        Description: Check if clinical_score_c is valid
+
+        Parameters:
+        ----------
+        language: A clinical_score_c String
+
+        Returns:
+        ----------
+        boolean: True/False based on valid clinical_score_c
+        error: A str error message if clinical_score_c is invalid
+        ------------------------------------------------------------------------------------------------------
+        """
+        if clinical_score_c:
+            return True, None
+        return False, f"Invalid {self.clinical_score_c} formatting"
+
+    def _is_clinical_score_valid_d(self, clinical_score_d: str) -> Tuple[bool, str]:
+        """
+        ------------------------------------------------------------------------------------------------------
+        Class: CSVValidation
+
+        Function: _is_clinical_score_valid_d
+
+        Description: Check if clinical_score_d is valid
+
+        Parameters:
+        ----------
+        language: A clinical_score_d String
+
+        Returns:
+        ----------
+        boolean: True/False based on valid clinical_score_d
+        error: A str error message if clinical_score_d is invalid
+        ------------------------------------------------------------------------------------------------------
+        """
+        if clinical_score_d:
+            return True, None
+        return False, f"Invalid {self.clinical_score_d} formatting"
+
+    def _is_clinical_score_valid_e(self, clinical_score_e: str) -> Tuple[bool, str]:
+        """
+        ------------------------------------------------------------------------------------------------------
+        Class: CSVValidation
+
+        Function: _is_clinical_score_valid_e
+
+        Description: Check if clinical_score_e is valid
+
+        Parameters:
+        ----------
+        language: A clinical_score_e String
+
+        Returns:
+        ----------
+        boolean: True/False based on valid clinical_score_e
+        error: A str error message if clinical_score_e is invalid
+        ------------------------------------------------------------------------------------------------------
+        """
+        if clinical_score_e:
+            return True, None
+        return False, f"Invalid {self.clinical_score_e} formatting"
+
     def validate_row(self, row) -> Tuple[bool, str]:
         """
         ------------------------------------------------------------------------------------------------------
@@ -332,6 +559,52 @@ class CSVValidation:
         is_valid_language, error = self._is_language_valid(row[self.language])
         if error:
             return (is_valid_language, error)
+
+        is_valid_age, error = self._is_age_valid(row[self.age])
+        if error:
+            return (is_valid_age, error)
+
+        is_valid_sex, error = self._is_sex_valid(row[self.sex])
+        if error:
+            return (is_valid_sex, error)
+
+        is_valid_race, error = self._is_race_valid(row[self.race])
+        if error:
+            return (is_valid_race, error)
+
+        is_study_arm, error = self._is_study_arm_valid(row[self.study_arm])
+        if error:
+            return (is_study_arm, error)
+
+        is_clinical_score_a, error = self._is_clinical_score_valid_a(
+            row[self.clinical_score_a]
+        )
+        if error:
+            return (is_clinical_score_a, error)
+
+        is_clinical_score_b, error = self._is_clinical_score_valid_b(
+            row[self.clinical_score_b]
+        )
+        if error:
+            return (is_clinical_score_b, error)
+
+        is_clinical_score_c, error = self._is_clinical_score_valid_c(
+            row[self.clinical_score_c]
+        )
+        if error:
+            return (is_clinical_score_c, error)
+
+        is_clinical_score_d, error = self._is_clinical_score_valid_d(
+            row[self.clinical_score_d]
+        )
+        if error:
+            return (is_clinical_score_d, error)
+
+        is_clinical_score_e, error = self._is_clinical_score_valid_e(
+            row[self.clinical_score_e]
+        )
+        if error:
+            return (is_clinical_score_e, error)
 
         return True, None
 
