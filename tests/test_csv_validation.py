@@ -51,6 +51,15 @@ class TestCSVValidation:
             "pt_id_external": "qwerty",
             "time_collected": "2023-02-02",
             "language": "en-US",
+            "age": 30,
+            "sex": "M",
+            "race": "Asian",
+            "study_arm": "Study Arm",
+            "clinical_score_a": "Score A",
+            "clinical_score_b": "Score B",
+            "clinical_score_c": "Score C",
+            "clinical_score_d": "Score D",
+            "clinical_score_e": "Score E",
         }
         is_valid, _ = csv.validate_row(row)
         assert is_valid == True
@@ -152,6 +161,15 @@ class TestCSVValidation:
             "pt_id_external": "qwerty",
             "time_collected": "2023-02-02",
             "language": "en-US",
+            "age": 30,
+            "sex": "M",
+            "race": "Asian",
+            "study_arm": "Study Arm",
+            "clinical_score_a": "Score A",
+            "clinical_score_b": "Score B",
+            "clinical_score_c": "Score C",
+            "clinical_score_d": "Score D",
+            "clinical_score_e": "Score E",
         }
         is_valid, _ = csv.validate_row(row)
         assert is_valid == True

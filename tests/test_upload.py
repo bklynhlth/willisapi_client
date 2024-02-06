@@ -15,6 +15,15 @@ class TestUpload:
             "tags",
             "qwerty",
             "2023-22-22",
+            30,
+            "M",
+            "Asian",
+            "Sudy Arm",
+            "Score A",
+            "Score B",
+            "Score C",
+            "Score D",
+            "Score E",
         ]
         self.df_cols = [
             "project_name",
@@ -22,6 +31,15 @@ class TestUpload:
             "workflow_tags",
             "pt_id_external",
             "time_collected",
+            "age",
+            "sex",
+            "race",
+            "study_arm",
+            "clinical_score_a",
+            "clinical_score_b",
+            "clinical_score_c",
+            "clinical_score_d",
+            "clinical_score_e",
         ]
         self.response_df_cols = ["filename", "upload_status", "upload_message"]
 
@@ -97,7 +115,10 @@ class TestUpload:
         mock_valid_csv.return_value = True
         mocked_df.return_value = pd.DataFrame([self.df_row], columns=self.df_cols)
         mock_row_validation.return_value = True, None
-        mocked_upload.return_value = False, "Your account is using all allocated projects; further projects cannot be created."
+        mocked_upload.return_value = (
+            False,
+            "Your account is using all allocated projects; further projects cannot be created.",
+        )
         df = upload(self.key, self.metadata)
         num = len(df[df["upload_status"] == "fail"])
         assert num == 1
