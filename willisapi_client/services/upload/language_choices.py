@@ -80,3 +80,7 @@ LANGUAGE_CHOICES = [
     Turkish,
     Vietnamese,
 ]
+SEX_CHOICES = [
+    ("Male", "M"),
+    ("Female", "F"),
+]

@@ -131,6 +131,15 @@ class UploadUtils:
             pt_id_external=row.pt_id_external,
             filename=pathlib.Path(row.file_path).name,
             language=row.language,
+            age= row.age,
+            sex= row.sex,
+            race= row.race,
+            study_arm= row.study_arm,
+            clinical_score_a= row.clinical_score_a,
+            clinical_score_b= row.clinical_score_b,
+            clinical_score_c= row.clinical_score_c,
+            clinical_score_d= row.clinical_score_d,
+            clinical_score_e= row.clinical_score_e,
         )
         if row.time_collected:
             data["time_collected"] = row.time_collected
