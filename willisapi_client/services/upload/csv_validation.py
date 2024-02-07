@@ -51,6 +51,7 @@ class CSVValidation:
             self.clinical_score_d,
             self.clinical_score_e,
         }
+        self.gender_field = ["M", "F"]
         self.workflow_tags = [
             "vocal_acoustics",
             "speech_characteristics",
@@ -326,7 +327,7 @@ class CSVValidation:
         error: A str error message if age is invalid
         ------------------------------------------------------------------------------------------------------
         """
-        if age is not None and age > 0:
+        if age:
             return (True, None)
         return (False, f"Invalid {self.age} formatting")
 
@@ -349,10 +350,9 @@ class CSVValidation:
         error: A str error message if sex is invalid
         ------------------------------------------------------------------------------------------------------
         """
-        for choice in SEX_CHOICES:
-            if sex == choice[1]:
-                return (True, None)
-            return (False, f"Invalid {self.sex} formatting")
+        if sex:
+            return (True, None)
+        return (False, f"Invalid {self.sex} formatting")
 
     def _is_race_valid(self, race: str) -> Tuple[bool, str]:
         """

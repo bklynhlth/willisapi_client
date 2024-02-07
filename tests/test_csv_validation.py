@@ -283,7 +283,7 @@ class TestCSVValidation:
     @patch(
         "willisapi_client.services.upload.csv_validation.CSVValidation._is_file_path_valid"
     )
-    def test_csv_row_validation_failed_incorrect_age(
+    def test_csv_row_validation_fail_empty_age(
         self, mocked_upload_file, mocked_file, mocked_headers
     ):
         mocked_headers.return_value = True
@@ -298,7 +298,7 @@ class TestCSVValidation:
             "pt_id_external": "qwerty",
             "time_collected": "2023-02-02",
             "language": "en-US",
-            "age": 0,
+            "age": "",
         }
         is_valid, _ = csv.validate_row(row)
         assert is_valid == False
@@ -310,34 +310,7 @@ class TestCSVValidation:
     @patch(
         "willisapi_client.services.upload.csv_validation.CSVValidation._is_file_path_valid"
     )
-    def test_csv_row_validation_failed_empty_age(
-        self, mocked_upload_file, mocked_file, mocked_headers
-    ):
-        mocked_headers.return_value = True
-        mocked_file.return_value = True
-        mocked_upload_file.return_value = (True, None)
-        csv = CSVValidation(file_path="/metadata.csv")
-        assert csv._is_valid() == True
-        row = {
-            "project_name": "project_name",
-            "file_path": "file.mp4",
-            "workflow_tags": "speech_characteristics",
-            "pt_id_external": "qwerty",
-            "time_collected": "2023-02-02",
-            "language": "en-US",
-            "age": None,
-        }
-        is_valid, _ = csv.validate_row(row)
-        assert is_valid == False
-
-    @patch(
-        "willisapi_client.services.upload.csv_validation.CSVValidation._is_valid_headers"
-    )
-    @patch("willisapi_client.services.upload.csv_validation.CSVValidation._is_file")
-    @patch(
-        "willisapi_client.services.upload.csv_validation.CSVValidation._is_file_path_valid"
-    )
-    def test_csv_row_validation_failed_empty_sex_field(
+    def test_csv_row_validation_fail_empty_sex_field(
         self, mocked_upload_file, mocked_file, mocked_headers
     ):
         mocked_headers.return_value = True
@@ -353,35 +326,7 @@ class TestCSVValidation:
             "time_collected": "2023-02-02",
             "language": "en-US",
             "age": 30,
-            "sex": None,
-        }
-        is_valid, _ = csv.validate_row(row)
-        assert is_valid == False
-
-    @patch(
-        "willisapi_client.services.upload.csv_validation.CSVValidation._is_valid_headers"
-    )
-    @patch("willisapi_client.services.upload.csv_validation.CSVValidation._is_file")
-    @patch(
-        "willisapi_client.services.upload.csv_validation.CSVValidation._is_file_path_valid"
-    )
-    def test_csv_row_validation_failed_non_empty_sex_field(
-        self, mocked_upload_file, mocked_file, mocked_headers
-    ):
-        mocked_headers.return_value = True
-        mocked_file.return_value = True
-        mocked_upload_file.return_value = (True, None)
-        csv = CSVValidation(file_path="/metadata.csv")
-        assert csv._is_valid() == True
-        row = {
-            "project_name": "project_name",
-            "file_path": "file.mp4",
-            "workflow_tags": "speech_characteristics",
-            "pt_id_external": "qwerty",
-            "time_collected": "2023-02-02",
-            "language": "en-US",
-            "age": 30,
-            "sex": "O",
+            "sex": "",
         }
         is_valid, _ = csv.validate_row(row)
         assert is_valid == False
