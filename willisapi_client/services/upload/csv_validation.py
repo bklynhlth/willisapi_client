@@ -326,8 +326,9 @@ class CSVValidation:
         error: A str error message if age is invalid
         ------------------------------------------------------------------------------------------------------
         """
-        if age > 0:
-            return (True, None)
+        if age is not None:
+            if age > 0:
+                return (True, None)
         return (False, f"Invalid {self.age} formatting")
 
     def _is_sex_valid(self, sex: str) -> Tuple[bool, str]:
