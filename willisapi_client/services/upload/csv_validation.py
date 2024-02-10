@@ -328,6 +328,8 @@ class CSVValidation:
         ------------------------------------------------------------------------------------------------------
         """
         if age:
+        # print(age)
+        # if age == "":
             return (True, None)
         return (False, f"Invalid {self.age} formatting")
 
@@ -350,7 +352,7 @@ class CSVValidation:
         error: A str error message if sex is invalid
         ------------------------------------------------------------------------------------------------------
         """
-        if sex:
+        if sex is None or sex:
             return (True, None)
         return (False, f"Invalid {self.sex} formatting")
 
@@ -373,7 +375,7 @@ class CSVValidation:
         error: A str error message if race is invalid
         ------------------------------------------------------------------------------------------------------
         """
-        if race:
+        if race is None or race:
             return True, None
         return False, f"Invalid {self.race} formatting"
 
@@ -396,7 +398,7 @@ class CSVValidation:
         error: A str error message if study_arm is invalid
         ------------------------------------------------------------------------------------------------------
         """
-        if study_arm:
+        if study_arm is None or study_arm:
             return True, None
         return False, f"Invalid {self.study_arm} formatting"
 
@@ -419,7 +421,7 @@ class CSVValidation:
         error: A str error message if clinical_score_a is invalid
         ------------------------------------------------------------------------------------------------------
         """
-        if clinical_score_a:
+        if clinical_score_a is None or clinical_score_a:
             return True, None
         return False, f"Invalid {self.clinical_score_a} formatting"
 
@@ -442,7 +444,7 @@ class CSVValidation:
         error: A str error message if clinical_score_b is invalid
         ------------------------------------------------------------------------------------------------------
         """
-        if clinical_score_b:
+        if clinical_score_b is None or clinical_score_b:
             return True, None
         return False, f"Invalid {self.clinical_score_b} formatting"
 
@@ -465,7 +467,7 @@ class CSVValidation:
         error: A str error message if clinical_score_c is invalid
         ------------------------------------------------------------------------------------------------------
         """
-        if clinical_score_c:
+        if clinical_score_c is None or clinical_score_c:
             return True, None
         return False, f"Invalid {self.clinical_score_c} formatting"
 
@@ -488,7 +490,7 @@ class CSVValidation:
         error: A str error message if clinical_score_d is invalid
         ------------------------------------------------------------------------------------------------------
         """
-        if clinical_score_d:
+        if clinical_score_d is None or clinical_score_d:
             return True, None
         return False, f"Invalid {self.clinical_score_d} formatting"
 
@@ -511,7 +513,7 @@ class CSVValidation:
         error: A str error message if clinical_score_e is invalid
         ------------------------------------------------------------------------------------------------------
         """
-        if clinical_score_e:
+        if clinical_score_e is None or clinical_score_e:
             return True, None
         return False, f"Invalid {self.clinical_score_e} formatting"
 
