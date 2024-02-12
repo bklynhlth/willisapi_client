@@ -327,7 +327,7 @@ class CSVValidation:
         error: A str error message if age is invalid
         ------------------------------------------------------------------------------------------------------
         """
-        if age:
+        if age is None or age:
             return (True, None)
         return (False, f"Invalid {self.age} formatting")
 
