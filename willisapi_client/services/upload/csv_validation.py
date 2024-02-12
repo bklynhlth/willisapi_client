@@ -328,8 +328,6 @@ class CSVValidation:
         ------------------------------------------------------------------------------------------------------
         """
         if age:
-        # print(age)
-        # if age == "":
             return (True, None)
         return (False, f"Invalid {self.age} formatting")
 
