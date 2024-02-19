@@ -50,42 +50,42 @@ class AuthUtils:
         else:
             return res_json
 
-    @staticmethod
-    def create_account(url, data, headers, try_number):
-        """
-        ------------------------------------------------------------------------------------------------------
-        Class: AuthUtils
+    # @staticmethod
+    # def create_account(url, data, headers, try_number):
+    #     """
+    #     ------------------------------------------------------------------------------------------------------
+    #     Class: AuthUtils
 
-        Function: create_account
+    #     Function: create_account
 
-        Description: This is an internal create_account function which makes a POST API call to the brooklyn.health API server.
+    #     Description: This is an internal create_account function which makes a POST API call to the brooklyn.health API server.
 
-        Parameters:
-        ----------
-        url: The URL of the API endpoint.
-        data: The data to be sent in the request body.
-        headers: The headers to be sent in the request.
-        try_number: The number of times the function has been tried.
+    #     Parameters:
+    #     ----------
+    #     url: The URL of the API endpoint.
+    #     data: The data to be sent in the request body.
+    #     headers: The headers to be sent in the request.
+    #     try_number: The number of times the function has been tried.
 
-        Returns:
-        ----------
-        json: The JSON response from the API server.
+    #     Returns:
+    #     ----------
+    #     json: The JSON response from the API server.
 
-        Raises:
-        ----------
-        UnableToOnboardClientError: If the function fails to signup after 3 tries.
-        ------------------------------------------------------------------------------------------------------
-        """
-        try:
-            response = requests.post(url, json=data, headers=headers)
-            res_json = response.json()
-        except (
-            requests.exceptions.ConnectionError,
-            json.decoder.JSONDecodeError,
-        ) as ex:
-            if try_number == 3:
-                raise UnableToOnboardClientError
-            time.sleep(random.random() * 2)
-            return AuthUtils.create_account(url, data, headers, try_number)
-        else:
-            return res_json
+    #     Raises:
+    #     ----------
+    #     UnableToOnboardClientError: If the function fails to signup after 3 tries.
+    #     ------------------------------------------------------------------------------------------------------
+    #     """
+    #     try:
+    #         response = requests.post(url, json=data, headers=headers)
+    #         res_json = response.json()
+    #     except (
+    #         requests.exceptions.ConnectionError,
+    #         json.decoder.JSONDecodeError,
+    #     ) as ex:
+    #         if try_number == 3:
+    #             raise UnableToOnboardClientError
+    #         time.sleep(random.random() * 2)
+    #         return AuthUtils.create_account(url, data, headers, try_number)
+    #     else:
+    #         return res_json
