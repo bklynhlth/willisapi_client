@@ -5,6 +5,7 @@ from willisapi_client.services.api import (
     login,
     upload,
     download,
+    user_permissions,
 )
 
-__all__ = ["login", "upload", "download"]
+__all__ = ["login", "upload", "download", "user_permissions"]

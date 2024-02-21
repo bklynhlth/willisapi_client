@@ -16,3 +16,7 @@ class InvalidFilePath(Exception):
 
 class InvalidCSVColumns(Exception):
     pass
+
+
+class UnableToUpdatePermissionsClientError(Exception):
+    pass
