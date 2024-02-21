@@ -5,7 +5,9 @@ from willisapi_client.services.auth.auth_utils import AuthUtils
 from willisapi_client.logging_setup import logger as logger
 
 
-def user_permissions(key: str, user_email: str, account: str, role: str, **kwargs):
+def user_permissions(
+    key: str, user_email: str, account: str, role: str, **kwargs
+) -> str:
     """
     ---------------------------------------------------------------------------------------------------
     Function: user_permissions
@@ -34,6 +36,10 @@ def user_permissions(key: str, user_email: str, account: str, role: str, **kwarg
     if is_role_valid:
         response = AuthUtils.user_permissions(url, data, headers, try_number=1)
         if response and "status_code" in response:
-            logger.info(response["message"])
+            message = response["message"]
+            logger.info(message)
     else:
-        logger.info("Invalid role")
+        message = "Invalid role"
+        logger.info(message)
+
+    return message
