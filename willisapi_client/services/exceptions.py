@@ -6,6 +6,10 @@ class UnableToOnboardClientError(Exception):
     pass
 
 
+class UnableToCreateAccountError(Exception):
+    pass
+
+
 class InvalidFileType(Exception):
     pass
 
