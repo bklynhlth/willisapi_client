@@ -34,14 +34,14 @@ def account_create(
     headers = wc.get_headers()
     headers["Authorization"] = key
     data = dict(
-        account=account,
+        account=account.lower(),
     )
     logger.info(f'{datetime.now().strftime("%H:%M:%S")}: Creating account')
     response = AuthUtils.account_create(url, data, headers, try_number=1)
     if response and "status_code" in response:
         if response["status_code"] == HTTPStatus.OK:
             logger.info(response["message"])
-        if response["status_code"] in [HTTPStatus.UNAUTHORIZED, HTTPStatus.BAD_REQUEST]:
+        else:
             logger.error(response["message"])
         return response["message"]
     else:
