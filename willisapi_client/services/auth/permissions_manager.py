@@ -35,9 +35,8 @@ def user_permissions(
     is_role_valid = AuthUtils.validate_role(role)
     if is_role_valid:
         response = AuthUtils.user_permissions(url, data, headers, try_number=1)
-        if response and "status_code" in response:
-            message = response["message"]
-            logger.info(message)
+        message = response["message"]
+        logger.info(message)
     else:
         message = "Invalid role"
         logger.info(message)
