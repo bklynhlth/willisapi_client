@@ -130,7 +130,7 @@ class UploadUtils:
             workflow_tags=row.workflow_tags,
             pt_id_external=row.pt_id_external,
             filename=pathlib.Path(row.file_path).name,
-            language=row.language,
+            language=row.language if row.language else "",
             age=row.age,
             sex=row.sex,
             race=row.race,
@@ -141,6 +141,9 @@ class UploadUtils:
             clinical_score_d=row.clinical_score_d,
             clinical_score_e=row.clinical_score_e,
         )
+        import pdb
+
+        pdb.set_trace()
         if row.time_collected:
             data["time_collected"] = row.time_collected
 
