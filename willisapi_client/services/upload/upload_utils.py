@@ -141,9 +141,6 @@ class UploadUtils:
             clinical_score_d=row.clinical_score_d,
             clinical_score_e=row.clinical_score_e,
         )
-        import pdb
-
-        pdb.set_trace()
         if row.time_collected:
             data["time_collected"] = row.time_collected
 
