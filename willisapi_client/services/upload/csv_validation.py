@@ -304,9 +304,9 @@ class CSVValidation:
         error: A str error message if langauge is invalid
         ------------------------------------------------------------------------------------------------------
         """
-        if language:
-            return (True, None)
-        return (False, f"Invalid {self.language} formatting")
+        # if language:
+        return (True, None)
+        # return (False, f"Invalid {self.language} formatting")
 
     def _is_age_valid(self, age: int):
         """
