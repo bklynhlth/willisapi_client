@@ -6,6 +6,10 @@ class UnableToOnboardClientError(Exception):
     pass
 
 
+class UnableToCreateAccountError(Exception):
+    pass
+
+
 class InvalidFileType(Exception):
     pass
 
@@ -15,4 +19,8 @@ class InvalidFilePath(Exception):
 
 
 class InvalidCSVColumns(Exception):
+    pass
+
+
+class UnableToUpdatePermissionsClientError(Exception):
     pass

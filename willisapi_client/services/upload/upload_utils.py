@@ -130,7 +130,16 @@ class UploadUtils:
             workflow_tags=row.workflow_tags,
             pt_id_external=row.pt_id_external,
             filename=pathlib.Path(row.file_path).name,
-            language=row.language,
+            language=row.language if row.language else "",
+            age=row.age,
+            sex=row.sex,
+            race=row.race,
+            study_arm=row.study_arm,
+            clinical_score_a=row.clinical_score_a,
+            clinical_score_b=row.clinical_score_b,
+            clinical_score_c=row.clinical_score_c,
+            clinical_score_d=row.clinical_score_d,
+            clinical_score_e=row.clinical_score_e,
         )
         if row.time_collected:
             data["time_collected"] = row.time_collected
@@ -144,7 +153,6 @@ class UploadUtils:
             pass
         else:
             error = None
-            project_limit_error = "Your account is using all allocated projects; further projects cannot be created."
             if "status_code" in res_json:
                 if res_json["status_code"] == HTTPStatus.OK:
                     if index == 0:
@@ -155,15 +163,12 @@ class UploadUtils:
                 if (
                     res_json["status_code"] == HTTPStatus.BAD_REQUEST
                     or res_json["status_code"] == HTTPStatus.INTERNAL_SERVER_ERROR
+                    or res_json["status_code"] == HTTPStatus.UNAUTHORIZED
                 ):
+                    error = res_json["message"]
                     if res_json["message"] == "Data already present in DB":
                         error = "data is already available in our storage"
-                    if (
-                        "message" in res_json
-                        and res_json["message"] == project_limit_error
-                    ):
-                        error = project_limit_error
-                        logger.error(error)
+
             else:
                 if "message" in res_json and res_json["message"] == "Unauthorized":
                     logger.error(

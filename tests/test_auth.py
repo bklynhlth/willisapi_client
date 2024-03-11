@@ -1,5 +1,6 @@
 from willisapi_client.services.auth.login_manager import login
-from willisapi_client.services.auth.user_group_manager import create_account
+
+from willisapi_client.services.auth.account_manager import account_create
 from unittest.mock import patch
 from datetime import timedelta, datetime
 
@@ -12,6 +13,7 @@ class TestLoginFunction:
         self.id_token = "dummy_token"
         self.client_email = "dummy@gmail.com"
         self.client_name = "dummy_group"
+        self.account = "Group1"
         self.expires_in = 100
         self.expires_in_date = str(
             self.dt.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -67,85 +69,59 @@ class TestLoginFunction:
         assert key == None
         assert expire_in == None
 
-    @patch("willisapi_client.services.auth.user_group_manager.AuthUtils.create_account")
+    @patch("willisapi_client.services.auth.account_manager.AuthUtils.account_create")
     def test_create_account_success(self, mocked_create_account):
         mocked_create_account.return_value = {
             "status_code": 200,
-            "message": "User already present in the group",
+            "message": "Account Created Successfully",
         }
-        result = create_account(
+        result = account_create(
             self.id_token,
-            self.client_email,
-            self.client_name,
+            self.account,
         )
-        print(result)
-        assert result == "User already present in the group"
+        assert result == "Account Created Successfully"
 
-    @patch("willisapi_client.services.auth.user_group_manager.AuthUtils.create_account")
+    @patch("willisapi_client.services.auth.account_manager.AuthUtils.account_create")
     def test_create_account_failed(self, mocked_create_account):
         mocked_create_account.return_value = {
-            "message": "Login failed",
-        }
-        result = create_account(
-            self.id_token,
-            self.client_email,
-            self.client_name,
-        )
-        print(result)
-        assert result == None
-
-    @patch("willisapi_client.services.auth.user_group_manager.AuthUtils.create_account")
-    def test_create_account_failed_400_status(self, mocked_create_account):
-        mocked_create_account.return_value = {
             "status_code": 400,
-            "message": "Python error",
+            "message": "Validation Error",
         }
-        result = create_account(
+        result = account_create(
             self.id_token,
-            self.client_email,
-            self.client_name,
+            self.account,
         )
-        print(result)
-        assert result == "Python error"
+        assert result == "Validation Error"
 
-    @patch("willisapi_client.services.auth.user_group_manager.AuthUtils.create_account")
-    def test_create_account_failed_401_status(self, mocked_create_account):
+    @patch("willisapi_client.services.auth.account_manager.AuthUtils.account_create")
+    def test_create_account_failed_for_non_admin_user(self, mocked_create_account):
         mocked_create_account.return_value = {
             "status_code": 401,
-            "message": "Not an Admin User",
+            "message": "Not an Admin",
         }
-        result = create_account(
+        result = account_create(
             self.id_token,
-            self.client_email,
-            self.client_name,
+            self.account,
         )
-        print(result)
-        assert result == "Not an Admin User"
+        assert result == "Not an Admin"
 
-    @patch("willisapi_client.services.auth.user_group_manager.AuthUtils.create_account")
-    def test_create_account_failed_409_status(self, mocked_create_account):
+    @patch("willisapi_client.services.auth.account_manager.AuthUtils.account_create")
+    def test_create_account_failed_unexpected(self, mocked_create_account):
         mocked_create_account.return_value = {
-            "status_code": 409,
-            "message": "User already exists or already in some group",
+            "status_code": 500,
+            "message": None,
         }
-        result = create_account(
+        result = account_create(
             self.id_token,
-            self.client_email,
-            self.client_name,
+            self.account,
         )
-        print(result)
-        assert result == "User already exists or already in some group"
+        assert result == None
 
-    @patch("willisapi_client.services.auth.user_group_manager.AuthUtils.create_account")
-    def test_create_account_failed_404_status(self, mocked_create_account):
-        mocked_create_account.return_value = {
-            "status_code": 404,
-            "message": "User not found",
-        }
-        result = create_account(
+    @patch("willisapi_client.services.auth.account_manager.AuthUtils.account_create")
+    def test_create_account_failed_no_response_from_server(self, mocked_create_account):
+        mocked_create_account.return_value = {}
+        result = account_create(
             self.id_token,
-            self.client_email,
-            self.client_name,
+            self.account,
         )
-        print(result)
-        assert result == "User not found"
+        assert result == None
