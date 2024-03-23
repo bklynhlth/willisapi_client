@@ -43,7 +43,8 @@ def download(key: str, project_name: str, **kwargs):
             logger.error("No access to project/data for download.")
         if response["status_code"] == HTTPStatus.OK:
             logger.info(f'{datetime.now().strftime("%H:%M:%S")}: Download Complete')
-            response_df, err = DownloadUtils.generate_response_df(response)
+            data = DownloadUtils.get_data_from_presigned_url(response["presigned_url"])
+            response_df, err = DownloadUtils.generate_response_df(data)
             if not err:
                 return response_df
     return empty_response_df

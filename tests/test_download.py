@@ -38,16 +38,23 @@ class TestDownloadFunction:
     def test_download_no_items_from_api(self, mocked_data):
         mocked_data.return_value = {
             "status_code": 200,
-            "items": {},
+            "presigned_url": None,
         }
         data = download(self.key, self.project_name)
         assert data.empty == True
 
     @patch("willisapi_client.services.download.download_utils.DownloadUtils.request")
-    def test_download_success(self, mocked_data):
+    @patch(
+        "willisapi_client.services.download.download_utils.DownloadUtils.get_data_from_presigned_url"
+    )
+    def test_download_success(self, mocked_data, mocked_response):
         with open("tests/test.json") as json_file:
             data = json.load(json_file)
         mocked_data.return_value = data
+        mocked_response.return_value = {
+            "status_code": 200,
+            "presigned_url": "https://google.com",
+        }
         data = download(self.key, self.project_name)
         assert data.empty == False
         assert data.filename.tolist()[0] == "test_video.mp4"
