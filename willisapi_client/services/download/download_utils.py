@@ -4,6 +4,8 @@ import time
 import random
 import pandas as pd
 from typing import Tuple
+from http import HTTPStatus
+
 
 vocal_acoustic_summary = "vocal_acoustics_summary"
 speech_characteristics_summary = "speech_characteristics_summary"
@@ -64,8 +66,8 @@ class DownloadUtils:
         ------------------------------------------------------------------------------------------------------
         """
         return (
-            response["items"]["project"]["project_name"],
-            len(response["items"]["project"]["participant"]),
+            response["project"]["project_name"],
+            len(response["project"]["participant"]),
         )
 
     def _get_pt_id_ext_and_num_records(response, pt):
@@ -88,8 +90,8 @@ class DownloadUtils:
         ------------------------------------------------------------------------------------------------------
         """
         return (
-            response["items"]["project"]["participant"][pt]["participant_Id"],
-            len(response["items"]["project"]["participant"][pt]["results"]),
+            response["project"]["participant"][pt]["participant_Id"],
+            len(response["project"]["participant"][pt]["results"]),
         )
 
     def _get_filename_and_timestamp(response, pt, rec):
@@ -113,12 +115,8 @@ class DownloadUtils:
         ------------------------------------------------------------------------------------------------------
         """
         return (
-            response["items"]["project"]["participant"][pt]["results"][rec][
-                "file_name"
-            ],
-            response["items"]["project"]["participant"][pt]["results"][rec][
-                "timestamp"
-            ],
+            response["project"]["participant"][pt]["results"][rec]["file_name"],
+            response["project"]["participant"][pt]["results"][rec]["timestamp"],
         )
 
     def _get_defined_columns():
@@ -158,7 +156,7 @@ class DownloadUtils:
         df: A pandas dataframe of specific workflow tag
         ------------------------------------------------------------------------------------------------------
         """
-        measures_dict = response["items"]["project"]["participant"][pt]["results"][rec][
+        measures_dict = response["project"]["participant"][pt]["results"][rec][
             "measures"
         ]
         if (
@@ -174,7 +172,35 @@ class DownloadUtils:
             return pd.read_json(json.dumps(measures_dict[workflow_tag][0]))
         return pd.DataFrame()
 
-    def generate_response_df(response) -> Tuple[pd.DataFrame, str]:
+    def get_data_from_presigned_url(url: str):
+        """
+        ------------------------------------------------------------------------------------------------------
+        Class: DownloadUtils
+
+        Function: get_data_from_presigned_url
+
+        Description: This function downloads the json data using S3 preisgned URL
+
+        Parameters:
+        ----------
+        response: S3 Presigned URL
+
+        Returns:
+        ----------
+        (data, error): Generates response data and error message
+        ------------------------------------------------------------------------------------------------------
+        """
+        response = {}
+        try:
+            data = requests.get(url)
+            if data.status_code == HTTPStatus.OK:
+                response = data.json()
+        except Exception:
+            pass
+
+        return response
+
+    def generate_response_df(data) -> Tuple[pd.DataFrame, str]:
         """
         ------------------------------------------------------------------------------------------------------
         Class: DownloadUtils
@@ -185,7 +211,7 @@ class DownloadUtils:
 
         Parameters:
         ----------
-        response: The JSON response from the API server.
+        data: The JSON data from the API server.
 
         Returns:
         ----------
@@ -194,20 +220,20 @@ class DownloadUtils:
         """
         response_df = pd.DataFrame()
         try:
-            if not response["items"]:
+            if not data:
                 return response_df, "No Data Found"
             (project_name, num_pts) = DownloadUtils._get_project_name_and_pts_count(
-                response
+                data
             )
             for pt in range(0, num_pts):
                 (pt_id_ext, num_records) = DownloadUtils._get_pt_id_ext_and_num_records(
-                    response, pt
+                    data, pt
                 )
                 for rec in range(0, num_records):
                     (
                         filename,
                         time_collected,
-                    ) = DownloadUtils._get_filename_and_timestamp(response, pt, rec)
+                    ) = DownloadUtils._get_filename_and_timestamp(data, pt, rec)
                     main_df = pd.DataFrame(
                         [[project_name, pt_id_ext, filename, time_collected]],
                         columns=DownloadUtils._get_defined_columns(),
@@ -215,16 +241,16 @@ class DownloadUtils:
 
                     vocal_acoustics_summary_df = (
                         DownloadUtils._get_summary_df_from_json(
-                            response, pt, rec, vocal_acoustic_summary
+                            data, pt, rec, vocal_acoustic_summary
                         )
                     )
                     speech_characteristics_summary_df = (
                         DownloadUtils._get_summary_df_from_json(
-                            response, pt, rec, speech_characteristics_summary
+                            data, pt, rec, speech_characteristics_summary
                         )
                     )
                     rater_qa_summary_df = DownloadUtils._get_summary_df_from_json(
-                        response, pt, rec, rater_qa_summary
+                        data, pt, rec, rater_qa_summary
                     )
                     df = pd.concat(
                         [
