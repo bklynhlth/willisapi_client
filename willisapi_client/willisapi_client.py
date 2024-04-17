@@ -15,7 +15,6 @@ class WillisapiClient:
         self.client_version = get_client_version()
         self.api_version = math.floor(self.client_version)
         self.api_uri = "api.brooklyn.health"
-        self.app_url = f"app.brooklyn.health/api/v{self.api_version}/"
         self.env = kwargs["env"] if "env" in kwargs else None
 
     def get_base_url(self):
@@ -33,9 +32,7 @@ class WillisapiClient:
         return self.get_base_url() + "upload"
 
     def get_download_url(self):
-        if self.env:
-            return f"https://{self.env}-{self.app_url}download"
-        return f"https://{self.app_url}download"
+        return self.get_base_url() + "download"
 
     def get_headers(self):
         return {"Content-Type": "application/json", "Accept": "application/json"}
