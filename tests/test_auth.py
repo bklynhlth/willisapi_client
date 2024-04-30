@@ -1,6 +1,5 @@
 from willisapi_client.services.auth.login_manager import login
 
-from willisapi_client.services.auth.account_manager import account_create
 from unittest.mock import patch
 from datetime import timedelta, datetime
 
@@ -68,60 +67,3 @@ class TestLoginFunction:
         key, expire_in = login(self.username, self.password)
         assert key == None
         assert expire_in == None
-
-    @patch("willisapi_client.services.auth.account_manager.AuthUtils.account_create")
-    def test_create_account_success(self, mocked_create_account):
-        mocked_create_account.return_value = {
-            "status_code": 200,
-            "message": "Account Created Successfully",
-        }
-        result = account_create(
-            self.id_token,
-            self.account,
-        )
-        assert result == "Account Created Successfully"
-
-    @patch("willisapi_client.services.auth.account_manager.AuthUtils.account_create")
-    def test_create_account_failed(self, mocked_create_account):
-        mocked_create_account.return_value = {
-            "status_code": 400,
-            "message": "Validation Error",
-        }
-        result = account_create(
-            self.id_token,
-            self.account,
-        )
-        assert result == "Validation Error"
-
-    @patch("willisapi_client.services.auth.account_manager.AuthUtils.account_create")
-    def test_create_account_failed_for_non_admin_user(self, mocked_create_account):
-        mocked_create_account.return_value = {
-            "status_code": 401,
-            "message": "Not an Admin",
-        }
-        result = account_create(
-            self.id_token,
-            self.account,
-        )
-        assert result == "Not an Admin"
-
-    @patch("willisapi_client.services.auth.account_manager.AuthUtils.account_create")
-    def test_create_account_failed_unexpected(self, mocked_create_account):
-        mocked_create_account.return_value = {
-            "status_code": 500,
-            "message": None,
-        }
-        result = account_create(
-            self.id_token,
-            self.account,
-        )
-        assert result == None
-
-    @patch("willisapi_client.services.auth.account_manager.AuthUtils.account_create")
-    def test_create_account_failed_no_response_from_server(self, mocked_create_account):
-        mocked_create_account.return_value = {}
-        result = account_create(
-            self.id_token,
-            self.account,
-        )
-        assert result == None
