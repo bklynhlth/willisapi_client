@@ -171,6 +171,7 @@ class UploadUtils:
 
             else:
                 if "message" in res_json and res_json["message"] == "Unauthorized":
+                    error = res_json["message"]
                     logger.error(
                         "Your Key is expired. Login again to generate a new key"
                     )
