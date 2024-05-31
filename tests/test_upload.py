@@ -95,7 +95,7 @@ class TestUpload:
         mocked_df.return_value = pd.DataFrame([self.df_row], columns=self.df_cols)
         mock_row_validation.return_value = True, None
         mocked_upload.return_value = True, None
-        df = upload(self.key, self.metadata, reupload="force")
+        df = upload(self.key, self.metadata, force_upload="true")
         num = len(df[df["upload_status"] == "success"])
         assert num == 1
         assert list(df.columns) == self.response_df_cols

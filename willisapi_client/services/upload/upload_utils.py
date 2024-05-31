@@ -102,7 +102,7 @@ class UploadUtils:
         return number_of_parts
 
     def initiate_multi_part_upload(
-        index: int, row, url: str, headers: dict, reupload: str
+        index: int, row, url: str, headers: dict, force_upload: str
     ) -> Tuple[str, str]:
         """
         ------------------------------------------------------------------------------------------------------
@@ -146,7 +146,7 @@ class UploadUtils:
 
         try:
             response = requests.post(
-                f"{url}?type=initiate&reupload={reupload}", json=data, headers=headers
+                f"{url}?type=initiate&force_upload={force_upload}", json=data, headers=headers
             )
             res_json = response.json()
         except Exception as ex:
@@ -280,7 +280,7 @@ class UploadUtils:
         return SORTED_PARTS
 
     @staticmethod
-    def upload(index, row, url, headers, reupload) -> Tuple[bool, str]:
+    def upload(index, row, url, headers, force_upload) -> Tuple[bool, str]:
         """
         ------------------------------------------------------------------------------------------------------
         Class: UploadUtils
@@ -303,7 +303,7 @@ class UploadUtils:
         ------------------------------------------------------------------------------------------------------
         """
         (upload_id, record_id, error) = UploadUtils.initiate_multi_part_upload(
-            index, row, url, headers, reupload
+            index, row, url, headers, force_upload
         )
         uploaded = False
         if upload_id and record_id:
