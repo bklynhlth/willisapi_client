@@ -1,12 +1,12 @@
 from willisapi_client.services.auth.login_manager import login
 
 from unittest.mock import patch
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 
 
 class TestLoginFunction:
     def setup_method(self):
-        self.dt = datetime.now()
+        self.dt = datetime.now(timezone.utc)
         self.username = "dummy"
         self.password = "password"
         self.id_token = "dummy_token"
