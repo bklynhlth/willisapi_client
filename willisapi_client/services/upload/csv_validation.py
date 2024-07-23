@@ -71,6 +71,8 @@ class CSVValidation:
             "scale_",
             "speech_characteristics_",
             "rater_qa_",
+            "scale_wd_",
+            "rater_qa_wd_",
         ]
         self.collect_time_format = r"^\d{4}-\d{2}-\d{2}$"
         self.df = None
