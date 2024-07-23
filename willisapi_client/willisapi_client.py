@@ -25,14 +25,14 @@ class WillisapiClient:
     def get_login_url(self):
         return self.get_base_url() + "login"
 
-    def get_signup_url(self):
-        return self.get_base_url() + "signup"
-
     def get_upload_url(self):
         return self.get_base_url() + "upload"
 
     def get_download_url(self):
         return self.get_base_url() + "download"
+
+    def get_diarize_remaining_calls_url(self):
+        return self.get_base_url() + "willis-diarize-call-remaining"
 
     def get_headers(self):
         return {"Content-Type": "application/json", "Accept": "application/json"}
