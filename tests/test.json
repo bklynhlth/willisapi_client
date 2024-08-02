@@ -36,7 +36,7 @@
                                     "speech_length_words": []
                                 }
                             ],
-                            "vocal_acoustics_summary": [
+                            "vocal_acoustics_simple_summary": [
                                 {
                                     "f0_mean": [],
                                     "f0_stdev": []
