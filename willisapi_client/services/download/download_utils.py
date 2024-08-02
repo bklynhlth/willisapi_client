@@ -7,7 +7,7 @@ from typing import Tuple
 from http import HTTPStatus
 
 
-vocal_acoustic_summary = "vocal_acoustics_summary"
+vocal_acoustics_simple_summary = "vocal_acoustics_simple_summary"
 speech_characteristics_summary = "speech_characteristics_summary"
 rater_qa_summary = "rater_qa_summary"
 
@@ -164,7 +164,7 @@ class DownloadUtils:
             and measures_dict[workflow_tag]
             and workflow_tag
             in [
-                vocal_acoustic_summary,
+                vocal_acoustics_simple_summary,
                 speech_characteristics_summary,
                 rater_qa_summary,
             ]
@@ -239,9 +239,9 @@ class DownloadUtils:
                         columns=DownloadUtils._get_defined_columns(),
                     )
 
-                    vocal_acoustics_summary_df = (
+                    vocal_acoustics_simple_summary_df = (
                         DownloadUtils._get_summary_df_from_json(
-                            data, pt, rec, vocal_acoustic_summary
+                            data, pt, rec, vocal_acoustics_simple_summary
                         )
                     )
                     speech_characteristics_summary_df = (
@@ -255,7 +255,7 @@ class DownloadUtils:
                     df = pd.concat(
                         [
                             main_df,
-                            vocal_acoustics_summary_df,
+                            vocal_acoustics_simple_summary_df,
                             speech_characteristics_summary_df,
                             rater_qa_summary_df,
                         ],
