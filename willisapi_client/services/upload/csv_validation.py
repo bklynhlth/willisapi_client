@@ -53,7 +53,7 @@ class CSVValidation:
         }
         self.gender_field = ["M", "F"]
         self.workflow_tags = [
-            "vocal_acoustics",
+            "vocal_acoustics_simple",
             "speech_characteristics",
             "speech_transcription_aws",
             "voice_and_speech",
