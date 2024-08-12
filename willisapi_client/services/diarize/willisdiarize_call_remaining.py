@@ -27,7 +27,7 @@ def willis_diarize_call_remaining(key: str, **kwargs):
     headers = wc.get_headers()
     headers["Authorization"] = key
 
-    response = DiarizeUtils.request(url, headers, try_number=1)
+    response = DiarizeUtils.request_call_remaining(url, headers, try_number=1)
     if response:
         logger.info(response["message"])
         return response["message"]

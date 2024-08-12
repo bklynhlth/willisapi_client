@@ -5,7 +5,7 @@ import random
 
 
 class DiarizeUtils:
-    def request(url, headers, try_number):
+    def request_call_remaining(url, headers, try_number):
         """
         ------------------------------------------------------------------------------------------------------
         Class: DiarizeUtils

@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from willisapi_client.services.diarize.willisdiarize import (
+from willisapi_client.services.diarize.willisdiarize_call_remaining import (
     willis_diarize_call_remaining,
 )
 
