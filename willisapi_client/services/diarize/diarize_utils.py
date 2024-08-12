@@ -2,15 +2,55 @@ import requests
 import json
 import time
 import random
+import os
 
 
 class DiarizeUtils:
+    def is_valid_file_path(file_path: str):
+        return file_path.endswith(".json") and os.path.exists(file_path)
+
+    def request_diarize(url, data, headers, try_number):
+        """
+        ------------------------------------------------------------------------------------------------------
+        Class: DiarizeUtils
+
+        Function: request_diarize
+
+        Description: This is an internal diarize function which makes a GET API call to brooklyn.health API server
+
+        Parameters:
+        ----------
+        url: The URL of the API endpoint.
+        headers: The headers to be sent in the request.
+        try_number: The number of times the function has been tried.
+
+        Returns:
+        ----------
+        json: The JSON response from the API server.
+        ------------------------------------------------------------------------------------------------------
+        """
+        try:
+            response = requests.post(url, json=data, headers=headers)
+            res_json = response.json()
+            if "status_code" not in res_json:
+                res_json["status_code"] = response.status_code
+        except (
+            requests.exceptions.ConnectionError,
+            json.decoder.JSONDecodeError,
+        ) as ex:
+            if try_number == 3:
+                raise
+            time.sleep(random.random() * 2)
+            return DiarizeUtils.request_diarize(url, headers, try_number=try_number + 1)
+        else:
+            return res_json
+
     def request_call_remaining(url, headers, try_number):
         """
         ------------------------------------------------------------------------------------------------------
         Class: DiarizeUtils
 
-        Function: request
+        Function: request_call_remaining
 
         Description: This is an internal diarize function which makes a GET API call to brooklyn.health API server
 
@@ -35,6 +75,8 @@ class DiarizeUtils:
             if try_number == 3:
                 raise
             time.sleep(random.random() * 2)
-            return DiarizeUtils.request(url, headers, try_number=try_number + 1)
+            return DiarizeUtils.request_call_remaining(
+                url, headers, try_number=try_number + 1
+            )
         else:
             return res_json

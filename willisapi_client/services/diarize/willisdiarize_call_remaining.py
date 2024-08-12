@@ -15,10 +15,6 @@ def willis_diarize_call_remaining(key: str, **kwargs):
     Parameters:
     ----------
     key: AWS access id token (str)
-
-    Returns:
-    ----------
-    string: String
     ---------------------------------------------------------------------------------------------------
     """
 
@@ -30,5 +26,3 @@ def willis_diarize_call_remaining(key: str, **kwargs):
     response = DiarizeUtils.request_call_remaining(url, headers, try_number=1)
     if response:
         logger.info(response["message"])
-        return response["message"]
-    return None
