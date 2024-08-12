@@ -1,34 +1,44 @@
 from http import HTTPStatus
+import json
 
 from willisapi_client.willisapi_client import WillisapiClient
 from willisapi_client.logging_setup import logger as logger
 from willisapi_client.services.diarize.diarize_utils import DiarizeUtils
 
 
-def willis_diarize_call_remaining(key: str, **kwargs):
+def willis_diarize(key: str, file_path: str, **kwargs):
     """
     ---------------------------------------------------------------------------------------------------
-    Function: willis_diarize_call_remaining
+    Function: willis_diarize
 
-    Description: This function returns the number of remaining calls for willisdiarize
+    Description: This function makes call to WillisDiarize Model
 
     Parameters:
     ----------
     key: AWS access id token (str)
+    file_path: String
 
     Returns:
     ----------
-    string: String
+    json: JSON
     ---------------------------------------------------------------------------------------------------
     """
 
     wc = WillisapiClient(env=kwargs.get("env"))
-    url = wc.get_diarize_remaining_calls_url()
+    url = wc.get_diarize()
     headers = wc.get_headers()
     headers["Authorization"] = key
+    corrected_transcript = None
 
-    response = DiarizeUtils.request(url, headers, try_number=1)
-    if response:
+    if not DiarizeUtils.is_valid_file_path(file_path):
+        logger.info("Incorrect file type")
+        return corrected_transcript
+
+    data = DiarizeUtils.read_json_file(file_path)
+
+    response = DiarizeUtils.request_diarize(url, data, headers, try_number=1)
+    if response["status_code"] != HTTPStatus.OK:
         logger.info(response["message"])
-        return response["message"]
-    return None
+    else:
+        corrected_transcript = response["data"]
+    return corrected_transcript
