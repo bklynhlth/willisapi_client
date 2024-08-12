@@ -9,6 +9,12 @@ class DiarizeUtils:
     def is_valid_file_path(file_path: str):
         return file_path.endswith(".json") and os.path.exists(file_path)
 
+    def read_json_file(file_path: str):
+        with open(file_path) as f:
+            json_data = json.load(f)
+        data = dict(json_data=json_data)
+        return data
+
     def request_diarize(url, data, headers, try_number):
         """
         ------------------------------------------------------------------------------------------------------

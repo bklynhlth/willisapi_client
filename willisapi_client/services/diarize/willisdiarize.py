@@ -32,10 +32,9 @@ def willis_diarize(key: str, file_path: str, **kwargs):
 
     if not DiarizeUtils.is_valid_file_path(file_path):
         logger.info("Incorrect file type")
+        return corrected_transcript
 
-    with open(file_path) as f:
-        json_data = json.load(f)
-    data = dict(json_data=json_data)
+    data = DiarizeUtils.read_json_file(file_path)
 
     response = DiarizeUtils.request_diarize(url, data, headers, try_number=1)
     if response["status_code"] != HTTPStatus.OK:
