@@ -3,6 +3,8 @@ import json
 import time
 import random
 import os
+import gzip
+import io
 
 
 class DiarizeUtils:
@@ -38,8 +40,6 @@ class DiarizeUtils:
         try:
             response = requests.post(url, json=data, headers=headers)
             res_json = response.json()
-            if "status_code" not in res_json:
-                res_json["status_code"] = response.status_code
         except (
             requests.exceptions.ConnectionError,
             json.decoder.JSONDecodeError,
@@ -47,7 +47,7 @@ class DiarizeUtils:
             if try_number == 3:
                 raise
             time.sleep(random.random() * 2)
-            return DiarizeUtils.request_diarize(url, headers, try_number=try_number + 1)
+            return DiarizeUtils.request_diarize(url, data, headers, try_number=try_number + 1)
         else:
             return res_json
 

@@ -1,5 +1,7 @@
 from http import HTTPStatus
 import json
+import gzip
+import base64
 
 from willisapi_client.willisapi_client import WillisapiClient
 from willisapi_client.logging_setup import logger as logger
@@ -40,5 +42,6 @@ def willis_diarize(key: str, file_path: str, **kwargs):
     if response["status_code"] != HTTPStatus.OK:
         logger.info(response["message"])
     else:
-        corrected_transcript = response["data"]
+        encoded_response = response["data"]
+        corrected_transcript = json.loads(gzip.decompress(base64.b64decode(encoded_response)))
     return corrected_transcript
