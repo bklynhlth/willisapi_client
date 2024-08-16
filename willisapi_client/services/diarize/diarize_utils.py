@@ -3,8 +3,6 @@ import json
 import time
 import random
 import os
-import gzip
-import io
 
 
 class DiarizeUtils:
