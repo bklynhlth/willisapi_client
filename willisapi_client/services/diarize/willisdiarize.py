@@ -1,5 +1,4 @@
 from http import HTTPStatus
-import json
 
 from willisapi_client.willisapi_client import WillisapiClient
 from willisapi_client.logging_setup import logger as logger
@@ -40,5 +39,6 @@ def willis_diarize(key: str, file_path: str, **kwargs):
     if response["status_code"] != HTTPStatus.OK:
         logger.info(response["message"])
     else:
-        corrected_transcript = response["data"]
+        encoded_response = response["data"]
+        corrected_transcript = DiarizeUtils.decode_response(encoded_response)
     return corrected_transcript
