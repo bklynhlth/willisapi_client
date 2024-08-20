@@ -23,6 +23,7 @@ def willis_diarize(key: str, file_path: str, **kwargs):
     ---------------------------------------------------------------------------------------------------
     """
 
+    logger.info("Passing through WillisDiarize...")
     wc = WillisapiClient(env=kwargs.get("env"))
     url = wc.get_diarize()
     headers = wc.get_headers()
@@ -30,7 +31,8 @@ def willis_diarize(key: str, file_path: str, **kwargs):
     corrected_transcript = None
 
     if not DiarizeUtils.is_valid_file_path(file_path):
-        logger.info("Incorrect file type")
+        logger.info("Input file type is incorrect. We only accept JSON files.")
+        logger.info("Failed!")
         return corrected_transcript
 
     data = DiarizeUtils.read_json_file(file_path)
@@ -41,7 +43,10 @@ def willis_diarize(key: str, file_path: str, **kwargs):
     response = DiarizeUtils.request_diarize(url, data, headers, try_number=1)
     if response["status_code"] != HTTPStatus.OK:
         logger.info(response["message"])
+        logger.info("Failed!")
     else:
+        logger.info("Returning processed JSON...")
         encoded_response = response["data"]
         corrected_transcript = DiarizeUtils.decode_response(encoded_response)
+        logger.info("Done!")
     return corrected_transcript

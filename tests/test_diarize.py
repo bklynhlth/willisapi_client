@@ -61,4 +61,4 @@ class TestDiarizeFunction:
         with caplog.at_level(logging.INFO):
             res = willis_diarize(self.key, self.file_path)
 
-        assert "Incorrect file type" in caplog.text
+        assert "Input file type is incorrect. We only accept JSON files" in caplog.text
