@@ -20,6 +20,7 @@ class DiarizeUtils:
             data = dict(json_data=json_data)
         except json.decoder.JSONDecodeError:
             logger.info("No data found in the file or JSON is invalid.")
+            logger.info("Failed!")
         return data
 
     def decode_response(encoded_response):
