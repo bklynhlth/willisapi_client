@@ -5,6 +5,7 @@ import random
 import os
 import gzip
 import base64
+from willisapi_client.logging_setup import logger as logger
 
 
 class DiarizeUtils:
@@ -12,9 +13,13 @@ class DiarizeUtils:
         return file_path.endswith(".json") and os.path.exists(file_path)
 
     def read_json_file(file_path: str):
-        with open(file_path) as f:
-            json_data = json.load(f)
-        data = dict(json_data=json_data)
+        data = None
+        try:
+            with open(file_path) as f:
+                json_data = json.load(f)
+            data = dict(json_data=json_data)
+        except json.decoder.JSONDecodeError:
+            logger.info("No data found in the file or JSON is invalid.")
         return data
 
     def decode_response(encoded_response):
