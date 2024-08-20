@@ -28,7 +28,7 @@ class TestDiarizeFunction:
         self, mock_file_path, mock_json, mock_api_res, mock_decoded_res, caplog
     ):
         mock_file_path.return_value = True
-        mock_json.return_value = {}
+        mock_json.return_value = {"Correct Transcription"}
         mock_api_res.return_value = {
             "status_code": 200,
             "data": "Encoded Response",

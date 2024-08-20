@@ -35,6 +35,9 @@ def willis_diarize(key: str, file_path: str, **kwargs):
 
     data = DiarizeUtils.read_json_file(file_path)
 
+    if not data:
+        return corrected_transcript
+
     response = DiarizeUtils.request_diarize(url, data, headers, try_number=1)
     if response["status_code"] != HTTPStatus.OK:
         logger.info(response["message"])
