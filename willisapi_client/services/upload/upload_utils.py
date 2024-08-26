@@ -305,6 +305,7 @@ class UploadUtils:
         (upload_id, record_id, error) = UploadUtils.initiate_multi_part_upload(
             index, row, url, headers, force_upload
         )
+        filename = os.path.basename(row.file_path)
         uploaded = False
         if upload_id and record_id:
             presigned_urls, number_of_parts = UploadUtils.fetch_pre_signed_part_urls(
@@ -314,7 +315,7 @@ class UploadUtils:
                 if len(presigned_urls) != number_of_parts:
                     parts = json.dumps([])
                     res = requests.post(
-                        f"{url}?type=complete&record_id={record_id}&upload_id={upload_id}&number_of_parts={number_of_parts}",
+                        f"{url}?type=complete&record_id={record_id}&upload_id={upload_id}&number_of_parts={number_of_parts}&filename={filename}",
                         json=parts,
                         headers=headers,
                     )
@@ -324,7 +325,7 @@ class UploadUtils:
                     UploadUtils.close_file(file)
                     parts = json.dumps(parts)
                     res = requests.post(
-                        f"{url}?type=complete&record_id={record_id}&upload_id={upload_id}&number_of_parts={number_of_parts}",
+                        f"{url}?type=complete&record_id={record_id}&upload_id={upload_id}&number_of_parts={number_of_parts}&filename={filename}",
                         json=parts,
                         headers=headers,
                     )

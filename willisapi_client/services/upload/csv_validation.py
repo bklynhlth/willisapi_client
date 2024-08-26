@@ -53,7 +53,7 @@ class CSVValidation:
         }
         self.gender_field = ["M", "F"]
         self.workflow_tags = [
-            "vocal_acoustics",
+            "vocal_acoustics_simple",
             "speech_characteristics",
             "speech_transcription_aws",
             "voice_and_speech",
@@ -71,6 +71,8 @@ class CSVValidation:
             "scale_",
             "speech_characteristics_",
             "rater_qa_",
+            "scale_wd_",
+            "rater_qa_wd_",
         ]
         self.collect_time_format = r"^\d{4}-\d{2}-\d{2}$"
         self.df = None
