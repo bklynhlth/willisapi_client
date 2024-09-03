@@ -7,7 +7,7 @@
         "participant": [
             {
                 "participant_Id": "pt_id_external",
-                "age": 0,
+                "age": "age",
                 "sex": "sex",
                 "race": "race",
                 "study_arm": "study_arm",
