@@ -27,7 +27,7 @@ Conversion notes:
 
 WillisAPI Client is the python interface for Brooklyn Health’s WillisAPI.
 
-Official documentation for WillisAPI Client can be found in the [Github Wiki](www.github.com/bklynhlth/willisapi_client/wiki).
+Official documentation for WillisAPI Client can be found in the [Github Wiki](http://www.github.com/bklynhlth/willisapi_client/wiki).
 
 To learn more about Brooklyn Health or WillisAPI, visit [brooklyn.health](https://www.brooklyn.health) or [getintouch@brooklyn.health](mailto:getintouch@brooklyn.health).
 
@@ -70,10 +70,10 @@ measures = willisapi.download(key, 'project_name')
 ```
 
 
-If you run into trouble while using the client, please raise it in the [Issues](www.github.com/bklynhlth/willisapi_client/issues) tab. 
+If you run into trouble while using the client, please raise it in the [Issues](http://www.github.com/bklynhlth/willisapi_client/issues) tab. 
 
 ***
 
 Brooklyn Health is a small team of clinicians, scientists, and engineers based in Brooklyn, NY. 
 
-We develop and maintain [OpenWillis](www.github.com/bklynhlth/openwillis), an open source python library for digital health measurement. 
+We develop and maintain [OpenWillis](http://www.github.com/bklynhlth/openwillis), an open source python library for digital health measurement. 
