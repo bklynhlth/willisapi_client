@@ -91,6 +91,15 @@ class DownloadUtils:
         """
         return (
             response["project"]["participant"][pt]["participant_Id"],
+            response["project"]["participant"][pt]["age"],
+            response["project"]["participant"][pt]["sex"],
+            response["project"]["participant"][pt]["race"],
+            response["project"]["participant"][pt]["study_arm"],
+            response["project"]["participant"][pt]["clinical_score_a"],
+            response["project"]["participant"][pt]["clinical_score_b"],
+            response["project"]["participant"][pt]["clinical_score_c"],
+            response["project"]["participant"][pt]["clinical_score_d"],
+            response["project"]["participant"][pt]["clinical_score_e"],
             len(response["project"]["participant"][pt]["results"]),
         )
 
@@ -133,7 +142,21 @@ class DownloadUtils:
         column_names: A list of static column names of the dataframe
         ------------------------------------------------------------------------------------------------------
         """
-        return ["project_name", "pt_id_external", "filename", "time_collected"]
+        return [
+            "project_name",
+            "pt_id_external",
+            "filename",
+            "time_collected",
+            "age",
+            "sex",
+            "race",
+            "study_arm",
+            "clinical_score_a",
+            "clinical_score_b",
+            "clinical_score_c",
+            "clinical_score_d",
+            "clinical_score_e",
+        ]
 
     def _get_summary_df_from_json(response, pt, rec, workflow_tag):
         """
@@ -226,16 +249,42 @@ class DownloadUtils:
                 data
             )
             for pt in range(0, num_pts):
-                (pt_id_ext, num_records) = DownloadUtils._get_pt_id_ext_and_num_records(
-                    data, pt
-                )
+                (
+                    pt_id_ext,
+                    age,
+                    sex,
+                    race,
+                    study_arm,
+                    clinical_score_a,
+                    clinical_score_b,
+                    clinical_score_c,
+                    clinical_score_d,
+                    clinical_score_e,
+                    num_records,
+                ) = DownloadUtils._get_pt_id_ext_and_num_records(data, pt)
                 for rec in range(0, num_records):
                     (
                         filename,
                         time_collected,
                     ) = DownloadUtils._get_filename_and_timestamp(data, pt, rec)
                     main_df = pd.DataFrame(
-                        [[project_name, pt_id_ext, filename, time_collected]],
+                        [
+                            [
+                                project_name,
+                                pt_id_ext,
+                                filename,
+                                time_collected,
+                                age,
+                                sex,
+                                race,
+                                study_arm,
+                                clinical_score_a,
+                                clinical_score_b,
+                                clinical_score_c,
+                                clinical_score_d,
+                                clinical_score_e,
+                            ]
+                        ],
                         columns=DownloadUtils._get_defined_columns(),
                     )
 

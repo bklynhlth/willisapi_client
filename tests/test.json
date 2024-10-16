@@ -7,6 +7,15 @@
         "participant": [
             {
                 "participant_Id": "pt_id_external",
+                "age": "age",
+                "sex": "sex",
+                "race": "race",
+                "study_arm": "study_arm",
+                "clinical_score_a": "clinical_score_a",
+                "clinical_score_b": "clinical_score_b",
+                "clinical_score_c": "clinical_score_c",
+                "clinical_score_d": "clinical_score_d",
+                "clinical_score_e": "clinical_score_e",
                 "results": [
                     {
                         "file_name": "test_video.mp4",
