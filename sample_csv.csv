@@ -1,2 +1,2 @@
-project_name,pt_id_external,file_path,time_collected,workflow_tags,language,age,sex,race,study_arm,clinical_score_a,clinical_score_b,clinical_score_c,clinical_score_d,clinical_score_e
-sample_project,pt_001,/user/sample_data/sample_file.wav,2022-07-12,sample_workflow_tag,language,age,sex,race,sample_Study_arm,clinical_score_a,clinical_score_b,clinical_score_c,clinical_score_d,clinical_score_e
+study_id_ext,pt_id_external,file_path,workflow,language,age,sex,race,arm
+sample_study,pt_001,/user/sample_data/sample_file.wav,sample_workflow_tag,language,age,sex,race,sample_arm

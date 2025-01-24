@@ -10,7 +10,7 @@ from willisapi_client.timer import measure
 
 
 @measure
-def download(key: str, project_name: str, **kwargs):
+def download(key: str, study_id_ext: str, **kwargs):
     """
     ---------------------------------------------------------------------------------------------------
     Function: download
@@ -20,7 +20,7 @@ def download(key: str, project_name: str, **kwargs):
     Parameters:
     ----------
     key: AWS access id token (str)
-    project_name: name of the project (str)
+    study_id_ext: name of the study (str)
 
     Returns:
     ----------
@@ -29,7 +29,7 @@ def download(key: str, project_name: str, **kwargs):
     """
 
     wc = WillisapiClient(env=kwargs.get("env"))
-    url = wc.get_download_url() + f"?project_name={project_name}"
+    url = wc.get_download_url() + f"?study_id_ext={study_id_ext}"
     headers = wc.get_headers()
     headers["Authorization"] = key
     logger.info(f'{datetime.now().strftime("%H:%M:%S")}: Download started')
@@ -40,7 +40,7 @@ def download(key: str, project_name: str, **kwargs):
         if response["status_code"] == HTTPStatus.FORBIDDEN:
             logger.error("Invalid key")
         if response["status_code"] == HTTPStatus.UNAUTHORIZED:
-            logger.error("No access to project/data for download.")
+            logger.error("No access to study/data for download.")
         if response["status_code"] == HTTPStatus.OK:
             logger.info(f'{datetime.now().strftime("%H:%M:%S")}: Download Complete')
             data = DownloadUtils.get_data_from_presigned_url(response["presigned_url"])

@@ -19,8 +19,8 @@ class CSVValidation:
     def __init__(self, file_path: str):
         self.file_path = file_path
         self.expected_file_ext = "csv"
-        self.project_name = "project_name"
-        self.tags = "workflow_tags"
+        self.study_id_ext = "study_id_ext"
+        self.tags = "workflow"
         self.pt_id_external = "pt_id_external"
         self.time_collected = "time_collected"
         self.upload_file_path = "file_path"
@@ -28,14 +28,10 @@ class CSVValidation:
         self.age = "age"
         self.sex = "sex"
         self.race = "race"
-        self.study_arm = "study_arm"
-        self.clinical_score_a = "clinical_score_a"
-        self.clinical_score_b = "clinical_score_b"
-        self.clinical_score_c = "clinical_score_c"
-        self.clinical_score_d = "clinical_score_d"
-        self.clinical_score_e = "clinical_score_e"
+        self.arm = "arm"
+        
         self.expected_headers = {
-            self.project_name,
+            self.study_id_ext,
             self.upload_file_path,
             self.tags,
             self.pt_id_external,
@@ -44,15 +40,10 @@ class CSVValidation:
             self.age,
             self.sex,
             self.race,
-            self.study_arm,
-            self.clinical_score_a,
-            self.clinical_score_b,
-            self.clinical_score_c,
-            self.clinical_score_d,
-            self.clinical_score_e,
+            self.arm,
         }
         self.gender_field = ["M", "F"]
-        self.workflow_tags = [
+        self.workflow = [
             "vocal_acoustics_simple",
             "speech_characteristics",
             "speech_transcription_aws",
@@ -65,7 +56,7 @@ class CSVValidation:
             "eye_blink_rate",
             "rater_qa",
         ]
-        self.dynamic_workflow_tags = [
+        self.dynamic_workflow = [
             "speech_transcription_aws_",
             "speaker_separation_",
             "scale_",
@@ -160,28 +151,28 @@ class CSVValidation:
             return True
         return False
 
-    def _is_project_name_valid(self, name: str) -> Tuple[bool, str]:
+    def _is_study_id_ext_valid(self, name: str) -> Tuple[bool, str]:
         """
         ------------------------------------------------------------------------------------------------------
         Class: CSVValidation
 
-        Function: _is_project_name_valid
+        Function: _is_study_id_ext_valid
 
-        Description: Check if project_name is empty
+        Description: Check if study_id_ext is empty
 
         Parameters:
         ----------
-        name: name of the project
+        name: name of the study
 
         Returns:
         ----------
-        boolena: True/False based on valid project_name
-        error: A str error message if project is invalid
+        boolena: True/False based on valid study_id_ext
+        error: A str error message if study is invalid
         ------------------------------------------------------------------------------------------------------
         """
         if name:
             return True, None
-        return False, f"Invalid {self.project_name} formatting"
+        return False, f"Invalid {self.study_id_ext} formatting"
 
     def _is_file_path_valid(self, file_path: str) -> Tuple[bool, str]:
         """
@@ -206,30 +197,30 @@ class CSVValidation:
             return True, None
         return False, f"Invalid {file_path} formatting"
 
-    def _is_workflow_tags_valid(self, workflow_tags: str) -> Tuple[bool, str]:
+    def _is_workflow_valid(self, workflow: str) -> Tuple[bool, str]:
         """
         ------------------------------------------------------------------------------------------------------
         Class: CSVValidation
 
-        Function: _is_workflow_tags_valid
+        Function: _is_workflow_valid
 
         Description: Check if workflow tags are valid
 
         Parameters:
         ----------
-        workflow_tags: A comma separated string of workflow tags
+        workflow: A comma separated string of workflow tags
 
         Returns:
         ----------
-        boolena: True/False based on valid workflow_tags
-        error: A str error message if workflow_tags is invalid
+        boolena: True/False based on valid workflow
+        error: A str error message if workflow is invalid
         ------------------------------------------------------------------------------------------------------
         """
-        tags = workflow_tags.split(",")
+        tags = workflow.split(",")
         for tag in tags:
             if not (
-                tag in self.workflow_tags
-                or tag.startswith(tuple(self.dynamic_workflow_tags))
+                tag in self.workflow
+                or tag.startswith(tuple(self.dynamic_workflow))
             ):
                 return False, f"Invalid {self.tags} formatting"
         return True, None
@@ -256,36 +247,6 @@ class CSVValidation:
         if pt_id_ext:
             return True, None
         return False, f"Invalid {self.pt_id_external} formatting"
-
-    def _is_time_collected_valid(self, collect_time: str) -> Tuple[bool, str]:
-        """
-        ------------------------------------------------------------------------------------------------------
-        Class: CSVValidation
-
-        Function: _is_time_collected_valid
-
-        Description: Check if collect_time is valid
-
-        Parameters:
-        ----------
-        collect_time: A string to collect_time (YYYY-MM-DD)
-
-        Returns:
-        ----------
-        boolena: True/False based on valid collect_time
-        error: A str error message if collect_time is invalid
-        ------------------------------------------------------------------------------------------------------
-        """
-        date_pattern = re.compile(self.collect_time_format)
-        if collect_time and date_pattern.match(collect_time):
-            try:
-                date = parse(collect_time)
-            except ParserError:
-                return False, f"Invalid {self.time_collected} formatting"
-            else:
-                if date > datetime.now():
-                    return False, f"Invalid {self.time_collected} formatting"
-        return True, None
 
     def _is_language_valid(self, language: str) -> Tuple[bool, str]:
         """
@@ -379,143 +340,28 @@ class CSVValidation:
             return True, None
         return False, f"Invalid {self.race} formatting"
 
-    def _is_study_arm_valid(self, study_arm: str) -> Tuple[bool, str]:
+    def _is_arm_valid(self, arm: str) -> Tuple[bool, str]:
         """
         ------------------------------------------------------------------------------------------------------
         Class: CSVValidation
 
-        Function: _is_study_arm_valid
+        Function: _is_arm_valid
 
-        Description: Check if study_arm is valid
-
-        Parameters:
-        ----------
-        language: A study_arm String
-
-        Returns:
-        ----------
-        boolean: True/False based on valid study_arm
-        error: A str error message if study_arm is invalid
-        ------------------------------------------------------------------------------------------------------
-        """
-        if study_arm is None or study_arm:
-            return True, None
-        return False, f"Invalid {self.study_arm} formatting"
-
-    def _is_clinical_score_valid_a(self, clinical_score_a: str) -> Tuple[bool, str]:
-        """
-        ------------------------------------------------------------------------------------------------------
-        Class: CSVValidation
-
-        Function: _is_clinical_score_valid_a
-
-        Description: Check if clinical_score_a is valid
+        Description: Check if arm is valid
 
         Parameters:
         ----------
-        language: A clinical_score_a String
+        language: A arm String
 
         Returns:
         ----------
-        boolean: True/False based on valid clinical_score_a
-        error: A str error message if clinical_score_a is invalid
+        boolean: True/False based on valid arm
+        error: A str error message if arm is invalid
         ------------------------------------------------------------------------------------------------------
         """
-        if clinical_score_a is None or clinical_score_a:
+        if arm is None or arm:
             return True, None
-        return False, f"Invalid {self.clinical_score_a} formatting"
-
-    def _is_clinical_score_valid_b(self, clinical_score_b: str) -> Tuple[bool, str]:
-        """
-        ------------------------------------------------------------------------------------------------------
-        Class: CSVValidation
-
-        Function: _is_clinical_score_valid_b
-
-        Description: Check if clinical_score_b is valid
-
-        Parameters:
-        ----------
-        language: A clinical_score_b String
-
-        Returns:
-        ----------
-        boolean: True/False based on valid clinical_score_b
-        error: A str error message if clinical_score_b is invalid
-        ------------------------------------------------------------------------------------------------------
-        """
-        if clinical_score_b is None or clinical_score_b:
-            return True, None
-        return False, f"Invalid {self.clinical_score_b} formatting"
-
-    def _is_clinical_score_valid_c(self, clinical_score_c: str) -> Tuple[bool, str]:
-        """
-        ------------------------------------------------------------------------------------------------------
-        Class: CSVValidation
-
-        Function: _is_clinical_score_valid_c
-
-        Description: Check if clinical_score_c is valid
-
-        Parameters:
-        ----------
-        language: A clinical_score_c String
-
-        Returns:
-        ----------
-        boolean: True/False based on valid clinical_score_c
-        error: A str error message if clinical_score_c is invalid
-        ------------------------------------------------------------------------------------------------------
-        """
-        if clinical_score_c is None or clinical_score_c:
-            return True, None
-        return False, f"Invalid {self.clinical_score_c} formatting"
-
-    def _is_clinical_score_valid_d(self, clinical_score_d: str) -> Tuple[bool, str]:
-        """
-        ------------------------------------------------------------------------------------------------------
-        Class: CSVValidation
-
-        Function: _is_clinical_score_valid_d
-
-        Description: Check if clinical_score_d is valid
-
-        Parameters:
-        ----------
-        language: A clinical_score_d String
-
-        Returns:
-        ----------
-        boolean: True/False based on valid clinical_score_d
-        error: A str error message if clinical_score_d is invalid
-        ------------------------------------------------------------------------------------------------------
-        """
-        if clinical_score_d is None or clinical_score_d:
-            return True, None
-        return False, f"Invalid {self.clinical_score_d} formatting"
-
-    def _is_clinical_score_valid_e(self, clinical_score_e: str) -> Tuple[bool, str]:
-        """
-        ------------------------------------------------------------------------------------------------------
-        Class: CSVValidation
-
-        Function: _is_clinical_score_valid_e
-
-        Description: Check if clinical_score_e is valid
-
-        Parameters:
-        ----------
-        language: A clinical_score_e String
-
-        Returns:
-        ----------
-        boolean: True/False based on valid clinical_score_e
-        error: A str error message if clinical_score_e is invalid
-        ------------------------------------------------------------------------------------------------------
-        """
-        if clinical_score_e is None or clinical_score_e:
-            return True, None
-        return False, f"Invalid {self.clinical_score_e} formatting"
+        return False, f"Invalid {self.arm} formatting"
 
     def validate_row(self, row) -> Tuple[bool, str]:
         """
@@ -536,27 +382,21 @@ class CSVValidation:
         error: A str error message if row is invalid
         ------------------------------------------------------------------------------------------------------
         """
-        is_valid_project, error = self._is_project_name_valid(row[self.project_name])
+        is_valid_study, error = self._is_study_id_ext_valid(row[self.study_id_ext])
         if error:
-            return (is_valid_project, error)
+            return (is_valid_study, error)
 
         is_valid_file, error = self._is_file_path_valid(row[self.upload_file_path])
         if error:
             return (is_valid_file, error)
 
-        is_valid_wft, error = self._is_workflow_tags_valid(row[self.tags])
+        is_valid_wft, error = self._is_workflow_valid(row[self.tags])
         if error:
             return (is_valid_wft, error)
 
         is_valid_pt_id, error = self._is_pt_id_external_valid(row[self.pt_id_external])
         if error:
             return (is_valid_pt_id, error)
-
-        is_valid_collect_time, error = self._is_time_collected_valid(
-            row[self.time_collected]
-        )
-        if error:
-            return (is_valid_collect_time, error)
 
         is_valid_language, error = self._is_language_valid(row[self.language])
         if error:
@@ -574,39 +414,9 @@ class CSVValidation:
         if error:
             return (is_valid_race, error)
 
-        is_study_arm, error = self._is_study_arm_valid(row[self.study_arm])
+        is_arm, error = self._is_arm_valid(row[self.arm])
         if error:
-            return (is_study_arm, error)
-
-        is_clinical_score_a, error = self._is_clinical_score_valid_a(
-            row[self.clinical_score_a]
-        )
-        if error:
-            return (is_clinical_score_a, error)
-
-        is_clinical_score_b, error = self._is_clinical_score_valid_b(
-            row[self.clinical_score_b]
-        )
-        if error:
-            return (is_clinical_score_b, error)
-
-        is_clinical_score_c, error = self._is_clinical_score_valid_c(
-            row[self.clinical_score_c]
-        )
-        if error:
-            return (is_clinical_score_c, error)
-
-        is_clinical_score_d, error = self._is_clinical_score_valid_d(
-            row[self.clinical_score_d]
-        )
-        if error:
-            return (is_clinical_score_d, error)
-
-        is_clinical_score_e, error = self._is_clinical_score_valid_e(
-            row[self.clinical_score_e]
-        )
-        if error:
-            return (is_clinical_score_e, error)
+            return (is_arm, error)
 
         return True, None
 
