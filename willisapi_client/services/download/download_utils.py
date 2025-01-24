@@ -138,7 +138,6 @@ class DownloadUtils:
             "study_id_ext",
             "pt_id_external",
             "filename",
-            "language",
             "age",
             "sex",
             "race",
