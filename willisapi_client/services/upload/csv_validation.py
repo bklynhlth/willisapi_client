@@ -22,20 +22,18 @@ class CSVValidation:
         self.study_id_ext = "study_id_ext"
         self.tags = "workflow"
         self.pt_id_external = "pt_id_external"
-        self.time_collected = "time_collected"
         self.upload_file_path = "file_path"
         self.language = "language"
         self.age = "age"
         self.sex = "sex"
         self.race = "race"
         self.arm = "arm"
-        
+
         self.expected_headers = {
             self.study_id_ext,
             self.upload_file_path,
             self.tags,
             self.pt_id_external,
-            self.time_collected,
             self.language,
             self.age,
             self.sex,
@@ -219,8 +217,7 @@ class CSVValidation:
         tags = workflow.split(",")
         for tag in tags:
             if not (
-                tag in self.workflow
-                or tag.startswith(tuple(self.dynamic_workflow))
+                tag in self.workflow or tag.startswith(tuple(self.dynamic_workflow))
             ):
                 return False, f"Invalid {self.tags} formatting"
         return True, None

@@ -43,9 +43,7 @@ def login(username: str, password: str, **kwargs) -> Tuple[str, int]:
         logger.info(
             f"Key expiration: {datetime.now(timezone.utc) + timedelta(seconds=response['result']['expires_in'])}"
         )
-        required_format = (
-            f"{datetime.now(timezone.utc) + timedelta(seconds=response['result']['expires_in'])}"
-        )
+        required_format = f"{datetime.now(timezone.utc) + timedelta(seconds=response['result']['expires_in'])}"
         return (response["result"]["id_token"], required_format)
     else:
         logger.error(f"Login Failed")

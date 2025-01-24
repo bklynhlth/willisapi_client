@@ -98,14 +98,14 @@ class DownloadUtils:
             len(response["study"]["participant"][pt]["results"]),
         )
 
-    def _get_filename_and_timestamp(response, pt, rec):
+    def _get_filename(response, pt, rec):
         """
         ------------------------------------------------------------------------------------------------------
         Class: DownloadUtils
 
-        Function: _get_filename_and_timestamp
+        Function: _get_filename
 
-        Description: Get filename and time_collected from json data
+        Description: Get filename from json data
 
         Parameters:
         ----------
@@ -115,13 +115,10 @@ class DownloadUtils:
 
         Returns:
         ----------
-        (filename, timestamp): filename and timestamp of the coa (str, str)
+        (filename): filename of the coa (str, str)
         ------------------------------------------------------------------------------------------------------
         """
-        return (
-            response["study"]["participant"][pt]["results"][rec]["file_name"],
-            response["study"]["participant"][pt]["results"][rec]["timestamp"],
-        )
+        return response["study"]["participant"][pt]["results"][rec]["file_name"]
 
     def _get_defined_columns():
         """
@@ -169,9 +166,7 @@ class DownloadUtils:
         df: A pandas dataframe of specific workflow tag
         ------------------------------------------------------------------------------------------------------
         """
-        measures_dict = response["study"]["participant"][pt]["results"][rec][
-            "measures"
-        ]
+        measures_dict = response["study"]["participant"][pt]["results"][rec]["measures"]
         if (
             workflow_tag in measures_dict
             and measures_dict[workflow_tag]
@@ -248,17 +243,13 @@ class DownloadUtils:
                     num_coas,
                 ) = DownloadUtils._get_pt_id_ext_and_num_coas(data, pt)
                 for rec in range(0, num_coas):
-                    (
-                        filename,
-                        time_collected,
-                    ) = DownloadUtils._get_filename_and_timestamp(data, pt, rec)
+                    (filename) = DownloadUtils._get_filename(data, pt, rec)
                     main_df = pd.DataFrame(
                         [
                             [
                                 study_id_ext,
                                 pt_id_ext,
                                 filename,
-                                time_collected,
                                 age,
                                 sex,
                                 race,

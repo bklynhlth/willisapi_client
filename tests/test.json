@@ -15,7 +15,6 @@
                     {
                         "file_name": "test_video.mp4",
                         "file_type": null,
-                        "timestamp": null,
                         "measures": {
                             "emotional_expressivity_summary": [
                                 {
