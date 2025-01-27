@@ -47,14 +47,14 @@ class DownloadUtils:
         else:
             return res_json
 
-    def _get_project_name_and_pts_count(response):
+    def _get_study_id_ext_and_pts_count(response):
         """
         ------------------------------------------------------------------------------------------------------
         Class: DownloadUtils
 
-        Function: _get_project_name_and_pts_count
+        Function: _get_study_id_ext_and_pts_count
 
-        Description: Get project and participant count from json data
+        Description: Get study and participant count from json data
 
         Parameters:
         ----------
@@ -62,71 +62,63 @@ class DownloadUtils:
 
         Returns:
         ----------
-        (project_name, pt_count): Name of the project and number of participants of the project (str, int)
+        (study_id_ext, pt_count): Name of the study and number of participants of the study (str, int)
         ------------------------------------------------------------------------------------------------------
         """
         return (
-            response["project"]["project_name"],
-            len(response["project"]["participant"]),
+            response["study"]["study_id"],
+            len(response["study"]["participant"]),
         )
 
-    def _get_pt_id_ext_and_num_records(response, pt):
+    def _get_pt_id_ext_and_num_coas(response, pt):
         """
         ------------------------------------------------------------------------------------------------------
         Class: DownloadUtils
 
-        Function: _get_pt_id_ext_and_num_records
+        Function: _get_pt_id_ext_and_num_coas
 
-        Description: Get participant id external and records count from json data
-
-        Parameters:
-        ----------
-        response: The JSON response from the API server.
-        pt: Index of participant
-
-        Returns:
-        ----------
-        (pt_id, record_count): Id of the participant and number of records of the participant (str, int)
-        ------------------------------------------------------------------------------------------------------
-        """
-        return (
-            response["project"]["participant"][pt]["participant_Id"],
-            response["project"]["participant"][pt]["age"],
-            response["project"]["participant"][pt]["sex"],
-            response["project"]["participant"][pt]["race"],
-            response["project"]["participant"][pt]["study_arm"],
-            response["project"]["participant"][pt]["clinical_score_a"],
-            response["project"]["participant"][pt]["clinical_score_b"],
-            response["project"]["participant"][pt]["clinical_score_c"],
-            response["project"]["participant"][pt]["clinical_score_d"],
-            response["project"]["participant"][pt]["clinical_score_e"],
-            len(response["project"]["participant"][pt]["results"]),
-        )
-
-    def _get_filename_and_timestamp(response, pt, rec):
-        """
-        ------------------------------------------------------------------------------------------------------
-        Class: DownloadUtils
-
-        Function: _get_filename_and_timestamp
-
-        Description: Get filename and time_collected from json data
+        Description: Get participant id external and coas count from json data
 
         Parameters:
         ----------
         response: The JSON response from the API server.
         pt: Index of participant
-        rec: Record data from API server
 
         Returns:
         ----------
-        (filename, timestamp): filename and timestamp of the record (str, str)
+        (pt_id, coa_count): Id of the participant and number of coas of the participant (str, int)
         ------------------------------------------------------------------------------------------------------
         """
         return (
-            response["project"]["participant"][pt]["results"][rec]["file_name"],
-            response["project"]["participant"][pt]["results"][rec]["timestamp"],
+            response["study"]["participant"][pt]["participant_Id"],
+            response["study"]["participant"][pt]["age"],
+            response["study"]["participant"][pt]["sex"],
+            response["study"]["participant"][pt]["race"],
+            response["study"]["participant"][pt]["arm"],
+            len(response["study"]["participant"][pt]["results"]),
         )
+
+    def _get_filename(response, pt, rec):
+        """
+        ------------------------------------------------------------------------------------------------------
+        Class: DownloadUtils
+
+        Function: _get_filename
+
+        Description: Get filename from json data
+
+        Parameters:
+        ----------
+        response: The JSON response from the API server.
+        pt: Index of participant
+        rec: coa data from API server
+
+        Returns:
+        ----------
+        (filename): filename of the coa (str, str)
+        ------------------------------------------------------------------------------------------------------
+        """
+        return response["study"]["participant"][pt]["results"][rec]["file_name"]
 
     def _get_defined_columns():
         """
@@ -143,19 +135,13 @@ class DownloadUtils:
         ------------------------------------------------------------------------------------------------------
         """
         return [
-            "project_name",
+            "study_id_ext",
             "pt_id_external",
             "filename",
-            "time_collected",
             "age",
             "sex",
             "race",
-            "study_arm",
-            "clinical_score_a",
-            "clinical_score_b",
-            "clinical_score_c",
-            "clinical_score_d",
-            "clinical_score_e",
+            "arm",
         ]
 
     def _get_summary_df_from_json(response, pt, rec, workflow_tag):
@@ -171,7 +157,7 @@ class DownloadUtils:
         ----------
         response: The JSON response from the API server.
         pt: Index of participant
-        rec: Record data from API server
+        rec: coa data from API server
         workflow_tag: Workflow Tag
 
         Returns:
@@ -179,9 +165,7 @@ class DownloadUtils:
         df: A pandas dataframe of specific workflow tag
         ------------------------------------------------------------------------------------------------------
         """
-        measures_dict = response["project"]["participant"][pt]["results"][rec][
-            "measures"
-        ]
+        measures_dict = response["study"]["participant"][pt]["results"][rec]["measures"]
         if (
             workflow_tag in measures_dict
             and measures_dict[workflow_tag]
@@ -245,7 +229,7 @@ class DownloadUtils:
         try:
             if not data:
                 return response_df, "No Data Found"
-            (project_name, num_pts) = DownloadUtils._get_project_name_and_pts_count(
+            (study_id_ext, num_pts) = DownloadUtils._get_study_id_ext_and_pts_count(
                 data
             )
             for pt in range(0, num_pts):
@@ -254,35 +238,21 @@ class DownloadUtils:
                     age,
                     sex,
                     race,
-                    study_arm,
-                    clinical_score_a,
-                    clinical_score_b,
-                    clinical_score_c,
-                    clinical_score_d,
-                    clinical_score_e,
-                    num_records,
-                ) = DownloadUtils._get_pt_id_ext_and_num_records(data, pt)
-                for rec in range(0, num_records):
-                    (
-                        filename,
-                        time_collected,
-                    ) = DownloadUtils._get_filename_and_timestamp(data, pt, rec)
+                    arm,
+                    num_coas,
+                ) = DownloadUtils._get_pt_id_ext_and_num_coas(data, pt)
+                for rec in range(0, num_coas):
+                    (filename) = DownloadUtils._get_filename(data, pt, rec)
                     main_df = pd.DataFrame(
                         [
                             [
-                                project_name,
+                                study_id_ext,
                                 pt_id_ext,
                                 filename,
-                                time_collected,
                                 age,
                                 sex,
                                 race,
-                                study_arm,
-                                clinical_score_a,
-                                clinical_score_b,
-                                clinical_score_c,
-                                clinical_score_d,
-                                clinical_score_e,
+                                arm,
                             ]
                         ],
                         columns=DownloadUtils._get_defined_columns(),

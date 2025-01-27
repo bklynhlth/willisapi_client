@@ -66,7 +66,7 @@ For more information on how to organize the `data.csv`, visit the [Github Wiki](
 
 
 ```
-measures = willisapi.download(key, 'project_name')
+measures = willisapi.download(key, 'study_id_ext')
 ```
 
 
