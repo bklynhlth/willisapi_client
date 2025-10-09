@@ -312,6 +312,8 @@ class UploadUtils:
             "visit_order": int(self.row.visit_order),
             "coa_name": self.row.coa_name,
             "file_path": self.row.file_path,
+            "filename": os.path.basename(self.row.file_path),
+            "force_upload": self.row.force_upload,
             "actual_scores": json.loads(self.row.actual_scores),
         }
         return payload

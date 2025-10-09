@@ -23,6 +23,10 @@ def metadata_upload(api_key: str, csv_path: str, **kwargs):
         headers["Authorization"] = f"token {api_key}"
         logger.info(f'{datetime.now().strftime("%H:%M:%S")}: beginning upload')
 
+        force_upload = kwargs.get("force_upload", False)
+        if force_upload:
+            csv.transformed_df["force_upload"] = True
+
         results = []
         for index, row in tqdm(
             csv.transformed_df.iterrows(), total=csv.transformed_df.shape[0]
