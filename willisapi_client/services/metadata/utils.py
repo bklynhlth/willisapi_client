@@ -29,7 +29,7 @@ class MetadataValidation:
 
     COA_ITEM_COUNTS = {"MADRS": 10, "YMRS": 10, "PHQ-9": 9, "GAD-7": 7}
 
-    def __init__(self, csv_path: str):
+    def __init__(self, csv_path: str, force_upload: bool = False):
         """
         Initialize validator with CSV file path.
 
@@ -40,6 +40,7 @@ class MetadataValidation:
         self.df = None
         self.errors = []
         self.transformed_df = None
+        self.force_upload = force_upload
 
     def validate_columns(self) -> bool:
         """
@@ -273,6 +274,7 @@ class MetadataValidation:
         # Convert actual_scores dict to JSON string for CSV storage
         for record in transformed_data:
             record["actual_scores"] = json.dumps(record["actual_scores"])
+            record["force_upload"] = self.force_upload
 
         self.transformed_df = pd.DataFrame(transformed_data)
         return self.transformed_df
