@@ -7,6 +7,7 @@ from willisapi_client.services.api import (
     download,
     willis_diarize_call_remaining,
     willis_diarize,
+    metadata_upload,
 )
 
 __all__ = [
@@ -15,4 +16,5 @@ __all__ = [
     "download",
     "willis_diarize_call_remaining",
     "willis_diarize",
+    "metadata_upload",
 ]

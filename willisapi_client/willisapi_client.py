@@ -22,6 +22,11 @@ class WillisapiClient:
             return f"https://{self.env}-{self.api_uri}/v{self.api_version}/"
         return f"https://{self.api_uri}/v{self.api_version}/"
 
+    def get_base_v2_url(self):
+        if self.env:
+            return f"https://{self.env}-{self.api_uri}/api/v2/"
+        return f"https://{self.api_uri}/api/v2/"
+
     def get_login_url(self):
         return self.get_base_url() + "login"
 
@@ -36,6 +41,9 @@ class WillisapiClient:
 
     def get_diarize(self):
         return self.get_base_url() + "diarize"
+
+    def get_metadata_upload_url(self):
+        return self.get_base_v2_url() + "metadata/upload"
 
     def get_headers(self):
         return {"Content-Type": "application/json", "Accept": "application/json"}

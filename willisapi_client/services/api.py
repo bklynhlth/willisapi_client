@@ -8,3 +8,4 @@ from willisapi_client.services.diarize import (
     willis_diarize_call_remaining,
     willis_diarize,
 )
+from willisapi_client.services.metadata import metadata_upload
