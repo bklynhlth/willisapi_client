@@ -1,2 +1,3 @@
 study_id,site_id,rater_email,participant_id,age,sex,race,language,visit_name,visit_order,coa_name,coa_item_number,coa_item_value,time_collected,file_path
-XXX100-01,1001,user_b@email.com,2,20,female,white,en-US,screening,0,MADRS,1,2,10/15/2025 11:40:12,/Users/vijayyadav/Desktop/willis_client/test_rec.ogg
+XXX100-01,1001,user_b@email.com,2,20,female,white,en-US,screening,0,MADRS,1,2,10/15/2025 11:40:12,test_rec.ogg
+
