@@ -1,2 +1,2 @@
-project_name,pt_id_external,file_path,time_collected,workflow_tags,language,age,sex,race,study_arm,clinical_score_a,clinical_score_b,clinical_score_c,clinical_score_d,clinical_score_e
-sample_project,pt_001,/user/sample_data/sample_file.wav,2022-07-12,sample_workflow_tag,language,age,sex,race,sample_Study_arm,clinical_score_a,clinical_score_b,clinical_score_c,clinical_score_d,clinical_score_e
+study_id,site_id,rater_email,participant_id,age,sex,race,language,visit_name,visit_order,coa_name,coa_item_number,coa_item_value,time_collected,file_path
+XXX100-01,1001,user_b@email.com,2,20,female,white,en-US,screening,0,MADRS,1,2,10/15/2025 11:40:12,/Users/vijayyadav/Desktop/willis_client/test_rec.ogg
