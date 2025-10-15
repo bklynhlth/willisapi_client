@@ -55,19 +55,11 @@ key, expiration = willisapi.login(username, password)
 
 
 ```
-summary = willisapi.upload(key, 'data.csv')
+summary = willisapi.metadata_upload(key, 'data.csv')
 ```
 
 
 For more information on how to organize the `data.csv`, visit the [Github Wiki](http://www.github.com/bklynhlth/willisapi_client/wiki).
-
-
-#### Download
-
-
-```
-measures = willisapi.download(key, 'project_name')
-```
 
 
 If you run into trouble while using the client, please raise it in the [Issues](http://www.github.com/bklynhlth/willisapi_client/issues) tab. 
