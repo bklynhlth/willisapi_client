@@ -55,7 +55,7 @@ key, expiration = willisapi.login(username, password)
 
 
 ```
-summary = willisapi.metadata_upload(key, 'data.csv')
+summary = willisapi.upload(key, 'data.csv')
 ```
 
 

@@ -1,4 +1,4 @@
 # website:   https://www.brooklyn.health
-from .upload import metadata_upload
+from .upload import upload
 
-__all__ = ["metadata_upload"]
+__all__ = ["upload"]

@@ -3,7 +3,7 @@ from typing import List, Dict, Any, Tuple
 import json
 import os
 import requests
-from willisapi_client.services.upload.language_choices import (
+from .language_choices import (
     LANGUAGE_CHOICES,
 )
 

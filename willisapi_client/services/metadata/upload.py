@@ -10,7 +10,7 @@ from willisapi_client.services.metadata.utils import MetadataValidation, UploadU
 
 
 @measure
-def metadata_upload(api_key: str, csv_path: str, **kwargs):
+def upload(api_key: str, csv_path: str, **kwargs):
 
     force_upload = kwargs.get("force_upload", False)
     csv = MetadataValidation(csv_path=csv_path, force_upload=force_upload)
@@ -19,7 +19,7 @@ def metadata_upload(api_key: str, csv_path: str, **kwargs):
         csv.create_final_csv()
 
         wc = WillisapiClient(env=kwargs.get("env"))
-        url = wc.get_metadata_upload_url()
+        url = wc.get_upload_url()
         headers = wc.get_headers()
         headers["Authorization"] = f"token {api_key}"
         logger.info(f'{datetime.now().strftime("%H:%M:%S")}: beginning upload')
@@ -73,10 +73,6 @@ def metadata_upload(api_key: str, csv_path: str, **kwargs):
             results.append(result_row)
 
         results_df = pd.DataFrame(results)
-        results_df.to_csv(
-            f"metadata_upload_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-            index=False,
-        )
         return results_df
     else:
         logger.error(f'{datetime.now().strftime("%H:%M:%S")}: csv check failed')
