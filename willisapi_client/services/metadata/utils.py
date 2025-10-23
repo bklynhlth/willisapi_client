@@ -293,7 +293,7 @@ class UploadUtils:
     def __init__(self, row):
         self.row = row
 
-    def validate_row(self) -> Tuple[bool, str | None]:
+    def validate_row(self):
         if not os.path.exists(self.row.file_path):
             return (False, "File path does not exist")
         if self.row.language not in LANGUAGE_CHOICES:
