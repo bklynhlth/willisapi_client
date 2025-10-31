@@ -27,22 +27,13 @@ class WillisapiClient:
             return f"https://{self.env}-{self.api_uri}/api/v2/"
         return f"https://{self.api_uri}/api/v2/"
 
-    def get_login_url(self):
-        return self.get_base_url() + "login"
-
-    def get_upload_url(self):
-        return self.get_base_url() + "upload"
-
-    def get_download_url(self):
-        return self.get_base_url() + "download"
-
     def get_diarize_remaining_calls_url(self):
         return self.get_base_url() + "willis-diarize-call-remaining"
 
     def get_diarize(self):
         return self.get_base_url() + "diarize"
 
-    def get_metadata_upload_url(self):
+    def get_upload_url(self):
         return self.get_base_v2_url() + "metadata/upload"
 
     def get_headers(self):

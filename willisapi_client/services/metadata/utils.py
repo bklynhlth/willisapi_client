@@ -3,7 +3,7 @@ from typing import List, Dict, Any, Tuple
 import json
 import os
 import requests
-from willisapi_client.services.upload.language_choices import (
+from .language_choices import (
     LANGUAGE_CHOICES,
 )
 
@@ -293,7 +293,7 @@ class UploadUtils:
     def __init__(self, row):
         self.row = row
 
-    def validate_row(self) -> Tuple[bool, str | None]:
+    def validate_row(self):
         if not os.path.exists(self.row.file_path):
             return (False, "File path does not exist")
         if self.row.language not in LANGUAGE_CHOICES:
