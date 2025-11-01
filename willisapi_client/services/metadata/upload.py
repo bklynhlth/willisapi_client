@@ -47,7 +47,7 @@ def upload(api_key: str, csv_path: str, **kwargs):
                                 response = requests.put(
                                     presigned,
                                     data=files["file"],
-                                    headers={"Content-Type": "audio/ogg"},
+                                    # headers={"Content-Type": "audio/ogg"},
                                 )
                             if response.status_code == 200:
                                 result_row["upload_status"] = "Success"
@@ -76,4 +76,5 @@ def upload(api_key: str, csv_path: str, **kwargs):
         return results_df
     else:
         logger.error(f'{datetime.now().strftime("%H:%M:%S")}: csv check failed')
+        logger.error(csv.errors)
         return None
