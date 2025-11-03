@@ -2,6 +2,8 @@ import pandas as pd
 from typing import List, Dict, Any, Tuple
 import json
 import os
+import hashlib
+import base64
 import requests
 from .language_choices import (
     LANGUAGE_CHOICES,
@@ -300,6 +302,17 @@ class UploadUtils:
             return (False, f"Invalid language: {self.row.language}")
         return (True, None)
 
+    def calculate_file_checksum(self, file_path: str) -> str:
+        try:
+            with open(file_path, "rb") as f:
+                file_data = f.read()
+
+            hash_bytes = hashlib.sha256(file_data).digest()
+            base64_hash = base64.b64encode(hash_bytes).decode("utf-8")
+            return base64_hash
+        except Exception as e:
+            raise RuntimeError(f"Failed to calculate checksum: {e}")
+
     def generate_payload(self) -> Dict[str, Any]:
         payload = {
             "study_id": self.row.study_id,
@@ -317,6 +330,7 @@ class UploadUtils:
             "filename": os.path.basename(self.row.file_path),
             "force_upload": self.row.force_upload,
             "actual_scores": json.loads(self.row.actual_scores),
+            "checksum": self.calculate_file_checksum(self.row.file_path),
         }
         return payload
 
