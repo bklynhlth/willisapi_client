@@ -2,6 +2,7 @@ import pandas as pd
 from tqdm import tqdm
 from datetime import datetime
 import requests
+import mimetypes
 
 from willisapi_client.timer import measure
 from willisapi_client.willisapi_client import WillisapiClient
@@ -42,12 +43,22 @@ def upload(api_key: str, csv_path: str, **kwargs):
                     presigned = res.get("response", {}).get("presigned")
                     if presigned:
                         try:
+                            content_type, _ = mimetypes.guess_type(
+                                payload.get("filename")
+                            )
+                            if not content_type:
+                                content_type = "application/octet-stream"
                             with open(row.file_path, "rb") as f:
-                                files = {"file": f}
                                 response = requests.put(
                                     presigned,
-                                    data=files["file"],
-                                    # headers={"Content-Type": "audio/ogg"},
+                                    data=f,
+                                    headers={
+                                        "x-amz-checksum-sha256": payload.get(
+                                            "checksum"
+                                        ),
+                                        "x-amz-sdk-checksum-algorithm": "SHA256",
+                                        "Content-Type": content_type,
+                                    },
                                 )
                             if response.status_code == 200:
                                 result_row["upload_status"] = "Success"
