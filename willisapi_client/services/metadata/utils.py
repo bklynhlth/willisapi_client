@@ -14,7 +14,6 @@ class MetadataValidation:
     REQUIRED_COLUMNS = [
         "study_id",
         "site_id",
-        "rater_email",
         "participant_id",
         "visit_name",
         "visit_order",
@@ -23,9 +22,10 @@ class MetadataValidation:
         "coa_item_value",
         "file_path",
         "time_collected",
+        "recording_order",
     ]
 
-    OPTIONAL_COLUMNS = ["age", "sex", "race", "language"]
+    OPTIONAL_COLUMNS = ["rater_id", "age", "sex", "race", "language"]
 
     ALLOWED_COA_NAMES = ["MADRS", "YMRS", "PHQ-9", "GAD-7"]
 
@@ -106,22 +106,6 @@ class MetadataValidation:
 
         return valid
 
-    def validate_email(self) -> bool:
-        """
-        Basic email validation for rater_email column.
-
-        Returns:
-            bool: True if validation passes, False otherwise
-        """
-        invalid_emails = self.df[~self.df["rater_email"].str.contains("@", na=False)]
-
-        if not invalid_emails.empty:
-            self.errors.append(
-                f"Invalid email addresses found in rows: {invalid_emails.index.tolist()}"
-            )
-            return False
-        return True
-
     def validate_coa_names(self) -> bool:
         """
         Validate that coa_name values are in the allowed list.
@@ -162,7 +146,6 @@ class MetadataValidation:
         validations = [
             self.validate_columns(),
             self.validate_data_types(),
-            self.validate_email(),
             self.validate_coa_names(),
         ]
 
@@ -185,12 +168,12 @@ class MetadataValidation:
         grouping_cols = [
             "study_id",
             "site_id",
-            "rater_email",
             "participant_id",
             "visit_name",
             "visit_order",
             "coa_name",
             "file_path",
+            "recording_order",
         ]
 
         # Add optional columns that are present
@@ -200,6 +183,29 @@ class MetadataValidation:
 
         results = []
 
+        # First, identify the assessment-level groups (without recording_order)
+        assessment_grouping_cols = [
+            "study_id",
+            "site_id",
+            "participant_id",
+            "visit_name",
+            # "visit_order",
+            "coa_name",
+            # "file_path",
+        ]
+
+        # Build a lookup of minimum recording_order per assessment
+        min_recording_lookup = {}
+        for assessment_key, assessment_df in self.df.groupby(
+            assessment_grouping_cols, dropna=False
+        ):
+            min_recording_order = assessment_df["recording_order"].min()
+            min_recording_lookup[assessment_key] = min_recording_order
+
+        actual_scores_cache = {}
+        results = []
+
+        # Process ALL recordings (not just the first one)
         for group_key, group_df in self.df.groupby(grouping_cols, dropna=False):
             # Create base record
             record = {}
@@ -218,43 +224,75 @@ class MetadataValidation:
             coa_name = record["coa_name"]
             expected_items = self.COA_ITEM_COUNTS.get(coa_name, 10)
 
-            # Create a dictionary to store item scores
-            item_scores = {}
+            # Determine if this is the first recording for this assessment
+            assessment_key = (
+                record["study_id"],
+                record["site_id"],
+                record["participant_id"],
+                record["visit_name"],
+                record["coa_name"],
+            )
 
-            for _, row in group_df.iterrows():
-                item_num = int(row["coa_item_number"])
-                item_score = row["coa_item_value"]
+            min_recording_order = min_recording_lookup[assessment_key]
+            is_first_recording = record["recording_order"] == min_recording_order
 
-                # Convert to int if not null, otherwise use 0 as default
-                if pd.notna(item_score):
-                    item_scores[item_num] = int(item_score)
-                else:
-                    item_scores[item_num] = None
+            if assessment_key in actual_scores_cache:
+                # Reuse cached actual_scores
+                actual_scores = actual_scores_cache[assessment_key]
+            else:
+                # Create a dictionary to store item scores (only for first recording)
+                item_scores = {}
 
-            # Build sections with all expected items (fill missing with 0)
-            sections = []
-            total_score = 0
+                if is_first_recording:
+                    # Extract item scores from CSV rows
+                    for _, row in group_df.iterrows():
+                        item_num = (
+                            int(row["coa_item_number"])
+                            if pd.notna(row["coa_item_number"])
+                            else None
+                        )
+                        item_score = row["coa_item_value"]
 
-            for item_num in range(1, expected_items + 1):
-                item_score = item_scores.get(item_num, None)  # Default to 0 if missing
-                total_score = total_score + (
-                    item_score if item_score is not None else 0
-                )
+                        if item_num is not None:
+                            # Convert to int if not null, otherwise use None
+                            if pd.notna(item_score):
+                                item_scores[item_num] = int(item_score)
+                            else:
+                                item_scores[item_num] = None
 
-                section = {
-                    "section_id": f"s{item_num:02d}",
-                    "section_notes": None,
-                    "items": [
-                        {"item_id": f"i{item_num:02d}", "item_score": item_score}
-                    ],
+                # Build sections with all expected items
+                sections = []
+                total_score = 0
+
+                for item_num in range(1, expected_items + 1):
+                    if is_first_recording:
+                        # Use extracted scores (or None if missing)
+                        item_score = item_scores.get(item_num, None)
+                    else:
+                        # Subsequent recordings have None for all items
+                        item_score = None
+
+                    total_score = total_score + (
+                        item_score if item_score is not None else 0
+                    )
+
+                    section = {
+                        "section_id": f"s{item_num:02d}",
+                        "section_notes": None,
+                        "items": [
+                            {"item_id": f"i{item_num:02d}", "item_score": item_score}
+                        ],
+                    }
+                    sections.append(section)
+
+                actual_scores = {
+                    "sections": sections,
+                    "total_score": total_score if is_first_recording else 0,
+                    "total_severity": None,
                 }
-                sections.append(section)
 
-            actual_scores = {
-                "sections": sections,
-                "total_score": total_score,
-                "total_severity": None,
-            }
+                # Cache the actual_scores for this assessment
+                actual_scores_cache[assessment_key] = actual_scores
 
             record["actual_scores"] = actual_scores
             results.append(record)
@@ -317,7 +355,7 @@ class UploadUtils:
         payload = {
             "study_id": self.row.study_id,
             "site_id": self.row.site_id,
-            "rater_email": self.row.rater_email,
+            "rater_id": self.row.rater_id,
             "participant_id": self.row.participant_id,
             "age": self.row.age,
             "sex": self.row.sex,
@@ -331,6 +369,7 @@ class UploadUtils:
             "force_upload": self.row.force_upload,
             "actual_scores": json.loads(self.row.actual_scores),
             "checksum": self.calculate_file_checksum(self.row.file_path),
+            "recording_order": int(self.row.recording_order),
         }
         return payload
 
