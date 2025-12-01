@@ -41,7 +41,7 @@ pip install willisapi_client
 
 
 #### Getting a Personal Access Token (PAT)
-1. Log in to the Brooklyn Health web application.
+1. Log in to the [Willis](https://www.willis.health/) application.
 2. Go to your profile section.
 3. Navigate to Personal Access Token (access key) and copy it for use in the client.
 
