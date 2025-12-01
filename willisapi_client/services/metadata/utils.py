@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from typing import List, Dict, Any, Tuple
 import json
 import os
@@ -136,6 +137,7 @@ class MetadataValidation:
         """
         try:
             self.df = pd.read_csv(self.csv_path)
+            self.df = self.df.replace({np.nan: None})
         except Exception as e:
             self.errors.append(f"Failed to load CSV: {str(e)}")
             return False
@@ -189,9 +191,7 @@ class MetadataValidation:
             "site_id",
             "participant_id",
             "visit_name",
-            # "visit_order",
             "coa_name",
-            # "file_path",
         ]
 
         # Build a lookup of minimum recording_order per assessment
@@ -216,9 +216,7 @@ class MetadataValidation:
             first_row = group_df.iloc[0]
             for col in optional_present:
                 if col not in ["time_collected"]:  # Exclude metadata
-                    value = first_row[col]
-                    if pd.notna(value):
-                        record[col] = value
+                    record[col] = first_row[col]
 
             # Get expected item count for this COA
             coa_name = record["coa_name"]
@@ -387,3 +385,7 @@ class UploadUtils:
                 return {"upload_status": "Failed", "error": res_json, "response": None}
             else:
                 return {"upload_status": "Success", "response": res_json, "error": None}
+
+
+class ProcessedMetadataValidation:
+    pass
