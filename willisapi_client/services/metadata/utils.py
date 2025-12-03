@@ -32,7 +32,12 @@ class MetadataValidation:
 
     COA_ITEM_COUNTS = {"MADRS": 10, "YMRS": 10, "PHQ-9": 9, "GAD-7": 7}
 
-    def __init__(self, csv_path: str, force_upload: bool = False):
+    def __init__(
+        self,
+        csv_path: str,
+        force_upload: bool = False,
+        is_processed_data_csv: bool = False,
+    ):
         """
         Initialize validator with CSV file path.
 
@@ -44,6 +49,9 @@ class MetadataValidation:
         self.errors = []
         self.transformed_df = None
         self.force_upload = force_upload
+        self.is_processed_data_csv = is_processed_data_csv
+        if self.is_processed_data_csv:
+            self.REQUIRED_COLUMNS.append("processed_data_path")
 
     def validate_columns(self) -> bool:
         """
@@ -177,6 +185,8 @@ class MetadataValidation:
             "file_path",
             "recording_order",
         ]
+        if self.is_processed_data_csv:
+            grouping_cols.append("processed_data_path")
 
         # Add optional columns that are present
         optional_present = [
@@ -362,12 +372,30 @@ class UploadUtils:
             "visit_name": self.row.visit_name,
             "visit_order": int(self.row.visit_order),
             "coa_name": self.row.coa_name,
-            "file_path": self.row.file_path,
             "filename": os.path.basename(self.row.file_path),
             "force_upload": self.row.force_upload,
             "actual_scores": json.loads(self.row.actual_scores),
             "checksum": self.calculate_file_checksum(self.row.file_path),
             "recording_order": int(self.row.recording_order),
+        }
+        return payload
+
+    def generate_processed_payload(self, files: List[Dict[str, str]]) -> Dict[str, Any]:
+        payload = {
+            "study_id": self.row.study_id,
+            "site_id": self.row.site_id,
+            "rater_id": self.row.rater_id,
+            "participant_id": self.row.participant_id,
+            "age": self.row.age,
+            "sex": self.row.sex,
+            "race": self.row.race,
+            "language": self.row.language,
+            "visit_name": self.row.visit_name,
+            "visit_order": int(self.row.visit_order),
+            "coa_name": self.row.coa_name,
+            "filename": os.path.basename(self.row.file_path),
+            "actual_scores": json.loads(self.row.actual_scores),
+            "files": files,
         }
         return payload
 
@@ -387,5 +415,27 @@ class UploadUtils:
                 return {"upload_status": "Success", "response": res_json, "error": None}
 
 
-class ProcessedMetadataValidation:
-    pass
+def find_files_with_pattern(directory, search_pattern):
+    matches = []
+    if not os.path.exists(directory):
+        return matches
+    # Walk through directory
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            # Check if pattern is in filename
+            if search_pattern in file:
+                filepath = os.path.join(root, file)
+                matches.append(filepath)
+    return matches
+
+
+def get_last_n_directories(filepath, n=3):
+    result = None
+    error = None
+    try:
+        parts = filepath.split(os.sep)
+        last_parts = parts[-(n + 1) :]
+        result = os.sep.join(last_parts)
+    except Exception as e:
+        error = "Could not extract container name and container version from file path"
+    return result, error

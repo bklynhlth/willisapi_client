@@ -1,4 +1,4 @@
 # website:   https://www.brooklyn.health
-from .upload import upload
+from .upload import upload, processed_upload
 
-__all__ = ["upload"]
+__all__ = ["upload", "processed_upload"]
