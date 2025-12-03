@@ -83,15 +83,28 @@ summary = willisapi.upload(key, 'data.csv', force_uploade=True)
 
 Before uploading, the client validates your CSV for:
 
-- **Required Columns**: Must include study_id, site_id, rater_email, participant_id, visit_name, visit_order, coa_name, coa_item_number, coa_item_value, file_path, time_collected.
-- **Optional Columns**: age, sex, race, language.
+- **Required Columns**: Must include study_id, site_id, participant_id, visit_name, visit_order, coa_name, coa_item_number, coa_item_value, file_path, time_collected.
+- **Optional Columns**: rater_id, age, sex, race, language.
 - **Valid COA Name**: Only these values are allowed: MADRS, YMRS, PHQ-9, GAD-7.
 - **Valid Audio File**: The file path in each row must exist and be accessible.
-- **Valid Email**: rater_email must be a valid email.
 - **Valid Data Types**: visit_order, age, coa_item_number, and coa_item_value must be numeric.
 - **Language**: If present, must be in the allowed language choices.
 
 If any validation fails, errors are collected and returned for review before upload proceeds.
+
+---
+
+**Processed Data Upload**
+
+To upload a processed data CSV file:
+
+```python
+summary = willisapi.processed_upload(key, '/path/to/processed-data.csv')
+```
+
+How to Call the Function
+- key: Your PAT token.
+- processed-data.csv: Path to your processed data CSV file.
 
 ---
 
