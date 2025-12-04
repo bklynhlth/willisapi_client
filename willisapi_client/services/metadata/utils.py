@@ -396,6 +396,7 @@ class UploadUtils:
             "filename": os.path.basename(self.row.file_path),
             "actual_scores": json.loads(self.row.actual_scores),
             "files": files,
+            "force_upload": self.row.force_upload,
         }
         return payload
 
