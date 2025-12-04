@@ -99,7 +99,11 @@ def upload(api_key: str, csv_path: str, **kwargs):
 
 @measure
 def processed_upload(api_key: str, csv_path: str, **kwargs):
-    csv = MetadataValidation(csv_path=csv_path, is_processed_data_csv=True)
+
+    force_upload = kwargs.get("force_upload", False)
+    csv = MetadataValidation(
+        csv_path=csv_path, force_upload=force_upload, is_processed_data_csv=True
+    )
     if csv.load_and_validate():
         logger.info(f'{datetime.now().strftime("%H:%M:%S")}: csv check passed')
         csv.create_final_csv()
@@ -177,7 +181,7 @@ def processed_upload(api_key: str, csv_path: str, **kwargs):
                             result_row["error"] = result_row["error"] + "\n" + str(ex)
                 else:
                     result_row["upload_status"] = "Failed"
-                    result_row["error"] = "Upload URL not received"
+                    result_row["error"] = res.get("error")
             else:
                 result_row["upload_status"] = "Failed"
                 result_row["error"] = f"{err}"
