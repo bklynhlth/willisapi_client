@@ -212,6 +212,18 @@ class MetadataValidation:
             min_recording_order = assessment_df["recording_order"].min()
             min_recording_lookup[assessment_key] = min_recording_order
 
+        # Build a lookup of maximum recording_order per VISIT (not per COA)
+        visit_grouping_cols = [
+            "study_id",
+            "site_id",
+            "participant_id",
+            "visit_name",
+        ]
+        max_recording_lookup = {}
+        for visit_key, visit_df in self.df.groupby(visit_grouping_cols, dropna=False):
+            max_recording_order = visit_df["recording_order"].max()
+            max_recording_lookup[visit_key] = max_recording_order
+
         actual_scores_cache = {}
         results = []
 
@@ -232,7 +244,7 @@ class MetadataValidation:
             coa_name = record["coa_name"]
             expected_items = self.COA_ITEM_COUNTS.get(coa_name, 10)
 
-            # Determine if this is the first recording for this assessment
+            # Determine if this is the first and last recording for this assessment/visit
             assessment_key = (
                 record["study_id"],
                 record["site_id"],
@@ -241,8 +253,20 @@ class MetadataValidation:
                 record["coa_name"],
             )
 
+            visit_key = (
+                record["study_id"],
+                record["site_id"],
+                record["participant_id"],
+                record["visit_name"],
+            )
+
             min_recording_order = min_recording_lookup[assessment_key]
+            max_recording_order = max_recording_lookup[visit_key]
             is_first_recording = record["recording_order"] == min_recording_order
+            is_last_recording = record["recording_order"] == max_recording_order
+
+            # Add is_last_recording to the record
+            record["is_last_recording"] = is_last_recording
 
             if assessment_key in actual_scores_cache:
                 # Reuse cached actual_scores
@@ -377,6 +401,7 @@ class UploadUtils:
             "actual_scores": json.loads(self.row.actual_scores),
             "checksum": self.calculate_file_checksum(self.row.file_path),
             "recording_order": int(self.row.recording_order),
+            "is_last_recording": self.row.is_last_recording,
         }
         return payload
 
