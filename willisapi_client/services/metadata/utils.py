@@ -136,6 +136,55 @@ class MetadataValidation:
             return False
         return True
 
+    def validate_recording_consistency(self) -> bool:
+        """
+        Validate that for each unique recording (grouped by study_id, site_id,
+        participant_id, visit_name, coa_name, recording_order), all metadata
+        columns remain consistent across rows (only coa_item_number and
+        coa_item_value should vary).
+
+        Returns:
+            bool: True if validation passes, False otherwise
+        """
+        valid = True
+
+        # Define grouping columns that identify a unique recording
+        grouping_cols = [
+            "file_path",
+        ]
+
+        # Define columns that should be consistent within a recording
+        # (all columns except coa_item_number and coa_item_value)
+        metadata_cols = [
+            col
+            for col in self.df.columns
+            if col not in ["coa_item_number", "coa_item_value", "recording_order"]
+        ]
+
+        # Group by recording identifier
+        for group_key, group_df in self.df.groupby(grouping_cols, dropna=False):
+            # For each metadata column, check if all values are the same
+            for col in metadata_cols:
+                if col in grouping_cols:
+                    continue  # Skip the grouping columns themselves
+
+                # Get unique non-null values for this column in the group
+                unique_values = group_df[col].dropna().unique()
+
+                # Check if we have more than one unique value
+                if len(unique_values) > 1:
+                    valid = False
+                    # Create a readable identifier for the recording
+                    file_path = group_key[grouping_cols.index("file_path")]
+
+                    self.errors.append(
+                        f"Inconsistent values in column '{col}' for recording: {file_path}. "
+                        f"Found values: {list(unique_values)}. All metadata columns must be "
+                        f"identical within a single recording."
+                    )
+
+        return valid
+
     def load_and_validate(self) -> bool:
         """
         Load CSV and run all validations.
@@ -157,6 +206,7 @@ class MetadataValidation:
             self.validate_columns(),
             self.validate_data_types(),
             self.validate_coa_names(),
+            self.validate_recording_consistency(),
         ]
 
         return all(validations)
