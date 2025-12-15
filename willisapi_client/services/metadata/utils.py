@@ -6,9 +6,15 @@ import os
 import hashlib
 import base64
 import requests
+from urllib.parse import urlsplit
 from .language_choices import (
     LANGUAGE_CHOICES,
 )
+
+
+ALLOWED_COA_NAMES = ["MADRS", "YMRS", "PHQ-9", "GAD-7", "HAM-D"]
+
+COA_ITEM_COUNTS = {"MADRS": 10, "YMRS": 10, "PHQ-9": 9, "GAD-7": 7, "HAM-D": 17}
 
 
 class MetadataValidation:
@@ -28,15 +34,10 @@ class MetadataValidation:
 
     OPTIONAL_COLUMNS = ["rater_id", "age", "sex", "race", "language"]
 
-    ALLOWED_COA_NAMES = ["MADRS", "YMRS", "PHQ-9", "GAD-7"]
-
-    COA_ITEM_COUNTS = {"MADRS": 10, "YMRS": 10, "PHQ-9": 9, "GAD-7": 7}
-
     def __init__(
         self,
         csv_path: str,
         force_upload: bool = False,
-        is_processed_data_csv: bool = False,
     ):
         """
         Initialize validator with CSV file path.
@@ -49,9 +50,6 @@ class MetadataValidation:
         self.errors = []
         self.transformed_df = None
         self.force_upload = force_upload
-        self.is_processed_data_csv = is_processed_data_csv
-        if self.is_processed_data_csv:
-            self.REQUIRED_COLUMNS.append("processed_data_path")
 
     def validate_columns(self) -> bool:
         """
@@ -125,13 +123,13 @@ class MetadataValidation:
         # Convert to lowercase for comparison
         self.df["coa_name"] = self.df["coa_name"].str.strip()
 
-        invalid_coa = self.df[~self.df["coa_name"].isin(self.ALLOWED_COA_NAMES)]
+        invalid_coa = self.df[~self.df["coa_name"].isin(ALLOWED_COA_NAMES)]
 
         if not invalid_coa.empty:
             invalid_values = invalid_coa["coa_name"].unique().tolist()
             self.errors.append(
                 f"Invalid coa_name values found: {invalid_values}. "
-                f"Allowed values are: {', '.join(self.ALLOWED_COA_NAMES)}"
+                f"Allowed values are: {', '.join(ALLOWED_COA_NAMES)}"
             )
             return False
         return True
@@ -235,8 +233,6 @@ class MetadataValidation:
             "file_path",
             "recording_order",
         ]
-        if self.is_processed_data_csv:
-            grouping_cols.append("processed_data_path")
 
         # Add optional columns that are present
         optional_present = [
@@ -292,7 +288,7 @@ class MetadataValidation:
 
             # Get expected item count for this COA
             coa_name = record["coa_name"]
-            expected_items = self.COA_ITEM_COUNTS.get(coa_name, 10)
+            expected_items = COA_ITEM_COUNTS.get(coa_name, 10)
 
             # Determine if this is the first and last recording for this assessment/visit
             assessment_key = (
@@ -422,6 +418,13 @@ class UploadUtils:
             return (False, f"Invalid language: {self.row.language}")
         return (True, None)
 
+    def validate_processed_data_row(self):
+        if not os.path.exists(self.row.recording):
+            return (False, "File path does not exist")
+        if self.row.language not in LANGUAGE_CHOICES:
+            return (False, f"Invalid language: {self.row.language}")
+        return (True, None)
+
     def calculate_file_checksum(self, file_path: str) -> str:
         try:
             with open(file_path, "rb") as f:
@@ -460,12 +463,9 @@ class UploadUtils:
             "study_id": self.row.study_id,
             "site_id": self.row.site_id,
             "rater_id": self.row.rater_id,
-            "participant_id": self.row.participant_id,
-            "age": self.row.age,
-            "sex": self.row.sex,
-            "race": self.row.race,
+            "pt_id": self.row.pt_id,
             "language": self.row.language,
-            "visit_name": self.row.visit_name,
+            "visit_id": self.row.visit_id,
             "visit_order": int(self.row.visit_order),
             "coa_name": self.row.coa_name,
             "filename": os.path.basename(self.row.file_path),
@@ -491,6 +491,228 @@ class UploadUtils:
                 return {"upload_status": "Success", "response": res_json, "error": None}
 
 
+class ProcessedMetadataValidation:
+    REQUIRED_COLUMNS = [
+        "study_id",
+        "site_id",
+        "pt_id",
+        "visit_id",
+        "visit_order",
+        "coa_id",
+        "timestamp",
+        "recording",
+        "recording_order",
+        "workflow",
+    ]
+
+    OPTIONAL_COLUMNS = ["rater_id", "language"]
+
+    def __init__(
+        self,
+        csv_path: str,
+        force_upload: bool = False,
+    ):
+        """
+        Initialize validator with CSV file path.
+
+        Args:
+            csv_path: Path to the CSV file
+        """
+        self.csv_path = csv_path
+        self.df = None
+        self.errors = []
+        self.transformed_df = None
+        self.force_upload = force_upload
+
+    def validate_columns(self) -> bool:
+        """
+        Validate that all required columns are present.
+
+        Returns:
+            bool: True if validation passes, False otherwise
+        """
+        missing_cols = [
+            col for col in self.REQUIRED_COLUMNS if col not in self.df.columns
+        ]
+
+        if missing_cols:
+            self.errors.append(f"Missing required columns: {', '.join(missing_cols)}")
+            return False
+        return True
+
+    def validate_data_types(self) -> bool:
+        """
+        Validate data types for key columns.
+
+        Returns:
+            bool: True if validation passes, False otherwise
+        """
+        valid = True
+
+        # Check visit_order is numeric
+        if not pd.api.types.is_numeric_dtype(self.df["visit_order"]):
+            try:
+                self.df["visit_order"] = pd.to_numeric(self.df["visit_order"])
+            except:
+                self.errors.append("visit_order must be numeric")
+                valid = False
+
+        # Check recording_order is numeric
+        if not pd.api.types.is_numeric_dtype(self.df["recording_order"]):
+            try:
+                self.df["recording_order"] = pd.to_numeric(self.df["recording_order"])
+            except:
+                self.errors.append("recording_order must be numeric")
+                valid = False
+
+        return valid
+
+    def validate_coa_names(self) -> bool:
+        """
+        Validate that coa_id values are in the allowed list.
+
+        Returns:
+            bool: True if validation passes, False otherwise
+        """
+        # Convert to lowercase for comparison
+        self.df["coa_id"] = self.df["coa_id"].str.strip()
+
+        invalid_coa = self.df[~self.df["coa_id"].isin(ALLOWED_COA_NAMES)]
+
+        if not invalid_coa.empty:
+            invalid_values = invalid_coa["coa_id"].unique().tolist()
+            self.errors.append(
+                f"Invalid coa_id values found: {invalid_values}. "
+                f"Allowed values are: {', '.join(ALLOWED_COA_NAMES)}"
+            )
+            return False
+        return True
+
+    def load_and_validate(self) -> bool:
+        """
+        Load CSV and run all validations.
+
+        Returns:
+            bool: True if all validations pass, False otherwise
+        """
+        try:
+            self.df = pd.read_csv(self.csv_path)
+            self.df = self.df.replace({np.nan: None})
+        except Exception as e:
+            self.errors.append(f"Failed to load CSV: {str(e)}")
+            return False
+
+        # Strip whitespace from column names
+        self.df.columns = self.df.columns.str.strip()
+
+        validations = [
+            self.validate_columns(),
+            self.validate_data_types(),
+            self.validate_coa_names(),
+        ]
+
+        return all(validations)
+
+    def create_scores_json(self, row: pd.Series, coa_id: str) -> str:
+        """Create scores JSON format based on COA type (MADRS=10 items, HAMD=17 items)."""
+        # Determine number of items based on coa_id
+        num_items = COA_ITEM_COUNTS.get(coa_id, 10)
+
+        sections = []
+        total_score = 0
+
+        for i in range(1, num_items + 1):
+            item_col = f"item_score_{i:02d}"
+            item_score = None
+
+            # Get item score if column exists and has a value
+            if item_col in row.index and pd.notna(row[item_col]):
+                item_score = (
+                    int(row[item_col])
+                    if isinstance(row[item_col], (int, float))
+                    else None
+                )
+                if item_score is not None:
+                    total_score += item_score
+
+            section = {
+                "section_id": f"s{i:02d}",
+                "section_notes": None,
+                "items": [{"item_id": f"i{i:02d}", "item_score": item_score}],
+            }
+            sections.append(section)
+
+        scores_dict = {
+            "sections": sections,
+            "total_score": total_score,
+            "total_severity": None,
+        }
+
+        return json.dumps(scores_dict)
+
+    def create_final_csv(self) -> pd.DataFrame:
+        """Concatenate multipart recordings grouped by pt_id, visit_id, visit_order, coa_id."""
+
+        merged = []
+
+        # Group by pt_id, visit_id, visit_order, coa_id
+        grouping_cols = ["pt_id", "visit_id", "visit_order", "coa_id"]
+
+        for rec_id, group in self.df.groupby(grouping_cols):
+            grp = group.sort_values("recording_order")
+
+            if len(grp) == 1:
+                row0 = grp.iloc[0].copy()
+                row0["recording_count"] = 1
+                row0["original_recordings"] = row0["recording"]
+                merged.append(row0)
+                continue
+
+            parts = []
+            bases = []
+
+            # Download all parts
+            for idx, (_, row) in enumerate(grp.iterrows()):
+                uri = row["recording"]
+
+                bucket, key = _get_bucket_n_key_path_from_s3url(uri)
+                fname = os.path.basename(key)
+                bases.append(os.path.splitext(fname)[0])
+
+            merged_name = "_".join(bases) + ".wav"
+
+            row0 = grp.iloc[0].copy()
+            orig_bucket, orig_key = _get_bucket_n_key_path_from_s3url(
+                grp.iloc[0]["recording"]
+            )
+            merged_key = os.path.join(os.path.dirname(orig_key), merged_name)
+
+            # Create new URI (no upload, logical merge only)
+            new_uri = f"s3://{orig_bucket}/{merged_key}"
+
+            # Use the first record (min recording_order) as base
+            row0 = grp.iloc[0].copy()
+            row0["recording"] = new_uri
+            row0["recording_count"] = len(grp)
+            row0["original_recordings"] = ", ".join(
+                [r["recording"] for _, r in grp.iterrows()]
+            )
+            merged.append(row0)
+
+        self.transformed_df = pd.DataFrame(merged)
+        self.transformed_df["scores_actual"] = self.transformed_df.apply(
+            lambda row: self.create_scores_json(row, row["coa_id"]), axis=1
+        )
+
+        item_score_cols = [
+            col for col in self.transformed_df.columns if col.startswith("item_score_")
+        ]
+
+        self.transformed_df = self.transformed_df.drop(columns=item_score_cols)
+
+        return self.transformed_df
+
+
 def find_files_with_pattern(directory, search_pattern):
     matches = []
     if not os.path.exists(directory):
@@ -503,6 +725,11 @@ def find_files_with_pattern(directory, search_pattern):
                 filepath = os.path.join(root, file)
                 matches.append(filepath)
     return matches
+
+
+def _get_bucket_n_key_path_from_s3url(path):
+    url_split = urlsplit(path)
+    return url_split.netloc, url_split.path[1:]
 
 
 def get_last_n_directories(filepath, n=3):

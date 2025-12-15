@@ -10,6 +10,7 @@ from willisapi_client.willisapi_client import WillisapiClient
 from willisapi_client.logging_setup import logger as logger
 from willisapi_client.services.metadata.utils import (
     MetadataValidation,
+    ProcessedMetadataValidation,
     UploadUtils,
     find_files_with_pattern,
     get_last_n_directories,
@@ -98,12 +99,10 @@ def upload(api_key: str, csv_path: str, **kwargs):
 
 
 @measure
-def processed_upload(api_key: str, csv_path: str, **kwargs):
+def processed_upload(api_key: str, csv_path: str, output_path: str, **kwargs):
 
     force_upload = kwargs.get("force_upload", False)
-    csv = MetadataValidation(
-        csv_path=csv_path, force_upload=force_upload, is_processed_data_csv=True
-    )
+    csv = ProcessedMetadataValidation(csv_path=csv_path, force_upload=force_upload)
     if csv.load_and_validate():
         logger.info(f'{datetime.now().strftime("%H:%M:%S")}: csv check passed')
         csv.create_final_csv()
@@ -119,12 +118,12 @@ def processed_upload(api_key: str, csv_path: str, **kwargs):
             csv.transformed_df.iterrows(), total=csv.transformed_df.shape[0]
         ):
             u = UploadUtils(row)
-            valid, err = u.validate_row()
+            valid, err = u.validate_processed_data_row()
             result_row = row.to_dict()
             if valid:
-                filename = os.path.basename(row.file_path).split(".")[0]
+                filename = os.path.basename(row.recording).split(".")[0]
                 files = []
-                for file in find_files_with_pattern(row.processed_data_path, filename):
+                for file in find_files_with_pattern(output_path, filename):
                     key, error = get_last_n_directories(file, n=2)
                     if error:
                         continue
@@ -132,7 +131,7 @@ def processed_upload(api_key: str, csv_path: str, **kwargs):
                     files.append(
                         {
                             "index": index,
-                            "file_path": file,
+                            "recording": file,
                             "key": key,
                             "checksum": checksum,
                         }
@@ -147,13 +146,13 @@ def processed_upload(api_key: str, csv_path: str, **kwargs):
                     for file_presigned in res.get("response", []):
                         presigned = file_presigned.get("presigned")
                         checksum = file_presigned.get("checksum")
-                        file_path = file_presigned.get("file_path")
+                        recording = file_presigned.get("recording")
                         index = file_presigned.get("index")
                         try:
-                            content_type, _ = mimetypes.guess_type(file_path)
+                            content_type, _ = mimetypes.guess_type(recording)
                             if not content_type:
                                 content_type = "text/csv"
-                            with open(file_path, "rb") as f:
+                            with open(recording, "rb") as f:
                                 response = requests.put(
                                     presigned,
                                     data=f,
@@ -172,7 +171,7 @@ def processed_upload(api_key: str, csv_path: str, **kwargs):
                                 result_row["error"] = (
                                     result_row["error"]
                                     + "\n"
-                                    + f"S3 upload failed with status code {response.status_code} for file {file_path}"
+                                    + f"S3 upload failed with status code {response.status_code} for file {recording}"
                                 )
                         except Exception as ex:
                             result_row["upload_status"] = "Failed"
