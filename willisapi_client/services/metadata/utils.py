@@ -419,8 +419,6 @@ class UploadUtils:
         return (True, None)
 
     def validate_processed_data_row(self):
-        if not os.path.exists(self.row.recording):
-            return (False, "File path does not exist")
         if self.row.language not in LANGUAGE_CHOICES:
             return (False, f"Invalid language: {self.row.language}")
         return (True, None)
@@ -459,6 +457,7 @@ class UploadUtils:
         return payload
 
     def generate_processed_payload(self, files: List[Dict[str, str]]) -> Dict[str, Any]:
+
         payload = {
             "study_id": self.row.study_id,
             "site_id": self.row.site_id,
@@ -467,9 +466,9 @@ class UploadUtils:
             "language": self.row.language,
             "visit_id": self.row.visit_id,
             "visit_order": int(self.row.visit_order),
-            "coa_name": self.row.coa_name,
-            "filename": os.path.basename(self.row.file_path),
-            "actual_scores": json.loads(self.row.actual_scores),
+            "coa_id": self.row.coa_id,
+            "filename": os.path.basename(self.row.recording),
+            "actual_scores": json.loads(self.row.scores_actual),
             "files": files,
             "force_upload": self.row.force_upload,
         }
@@ -709,6 +708,8 @@ class ProcessedMetadataValidation:
         ]
 
         self.transformed_df = self.transformed_df.drop(columns=item_score_cols)
+        # add force_upload = force_upload for all rows of self.transformed_df
+        self.transformed_df["force_upload"] = self.force_upload
 
         return self.transformed_df
 
