@@ -12,9 +12,9 @@ from .language_choices import (
 )
 
 
-ALLOWED_COA_NAMES = ["MADRS", "YMRS", "PHQ-9", "GAD-7", "HAM-D"]
+ALLOWED_COA_NAMES = ["MADRS", "YMRS", "PHQ-9", "GAD-7", "HAM-D17"]
 
-COA_ITEM_COUNTS = {"MADRS": 10, "YMRS": 10, "PHQ-9": 9, "GAD-7": 7, "HAM-D": 17}
+COA_ITEM_COUNTS = {"MADRS": 10, "YMRS": 10, "PHQ-9": 9, "GAD-7": 7, "HAM-D17": 17}
 
 
 class MetadataValidation:
