@@ -10,7 +10,7 @@ from urllib.parse import urlsplit
 from .language_choices import (
     LANGUAGE_CHOICES,
 )
-
+from dateutil import parser
 
 ALLOWED_COA_NAMES = ["MADRS", "YMRS", "PHQ-9", "GAD-7", "HAM-D17"]
 
@@ -453,11 +453,11 @@ class UploadUtils:
             "checksum": self.calculate_file_checksum(self.row.file_path),
             "recording_order": int(self.row.recording_order),
             "is_last_recording": self.row.is_last_recording,
+            "timestamp": parser.parse(self.row.timestamp).isoformat(),
         }
         return payload
 
     def generate_processed_payload(self, files: List[Dict[str, str]]) -> Dict[str, Any]:
-
         payload = {
             "study_id": self.row.study_id,
             "site_id": self.row.site_id,
@@ -471,6 +471,7 @@ class UploadUtils:
             "actual_scores": json.loads(self.row.scores_actual),
             "files": files,
             "force_upload": self.row.force_upload,
+            "timestamp": parser.parse(self.row.timestamp).isoformat(),
         }
         return payload
 
