@@ -117,9 +117,17 @@ def processed_upload(api_key: str, csv_path: str, output_path: str, **kwargs):
         for index, row in tqdm(
             csv.transformed_df.iterrows(), total=csv.transformed_df.shape[0]
         ):
+            result_row = row.to_dict()
+
+            # Skip rows with unsupported file types
+            if row.get("skip_upload"):
+                result_row["upload_status"] = "Failed"
+                result_row["error"] = row.get("skip_reason")
+                results.append(result_row)
+                continue
+
             u = UploadUtils(row)
             valid, err = u.validate_processed_data_row()
-            result_row = row.to_dict()
             if valid:
                 filename = os.path.basename(row.recording).split(".")[0]
                 files = []

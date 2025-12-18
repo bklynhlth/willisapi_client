@@ -16,6 +16,7 @@ ALLOWED_COA_NAMES = ["MADRS", "YMRS", "PHQ-9", "GAD-7", "HAM-D"]
 
 COA_ITEM_COUNTS = {"MADRS": 10, "YMRS": 10, "PHQ-9": 9, "GAD-7": 7, "HAM-D": 17}
 
+SUPPORTED_AUDIO_EXTENSIONS = [".mp3", ".wav", ".ogg"]
 
 class MetadataValidation:
     REQUIRED_COLUMNS = [
@@ -662,21 +663,60 @@ class ProcessedMetadataValidation:
 
             if len(grp) == 1:
                 row0 = grp.iloc[0].copy()
+                recording = row0["recording"]
+                ext = os.path.splitext(recording)[1].lower() if recording else ""
+
+                # Skip single recordings with unsupported file types
+                if ext not in SUPPORTED_AUDIO_EXTENSIONS:
+                    row0["recording_count"] = 1
+                    row0["original_recordings"] = recording
+                    row0["skip_upload"] = True
+                    row0["skip_reason"] = (
+                        f"Unsupported file type '{ext}'. "
+                        f"Only {', '.join(SUPPORTED_AUDIO_EXTENSIONS)} are supported."
+                    )
+                    merged.append(row0)
+                    continue
+
                 row0["recording_count"] = 1
                 row0["original_recordings"] = row0["recording"]
+                row0["skip_upload"] = False
+                row0["skip_reason"] = None
                 merged.append(row0)
                 continue
 
             parts = []
             bases = []
+            unsupported_files = []
 
-            # Download all parts
+            # Download all parts and validate extensions
             for idx, (_, row) in enumerate(grp.iterrows()):
                 uri = row["recording"]
 
                 bucket, key = _get_bucket_n_key_path_from_s3url(uri)
                 fname = os.path.basename(key)
+                ext = os.path.splitext(fname)[1].lower()
+
+                # Check if file extension is supported
+                if ext not in SUPPORTED_AUDIO_EXTENSIONS:
+                    unsupported_files.append(f"{fname} ({ext})")
+
                 bases.append(os.path.splitext(fname)[0])
+
+            # Skip if any files have unsupported extensions
+            if unsupported_files:
+                row0 = grp.iloc[0].copy()
+                row0["recording_count"] = len(grp)
+                row0["original_recordings"] = ", ".join(
+                    [r["recording"] for _, r in grp.iterrows()]
+                )
+                row0["skip_upload"] = True
+                row0["skip_reason"] = (
+                    f"Unsupported file type(s): {', '.join(unsupported_files)}. "
+                    f"Only {', '.join(SUPPORTED_AUDIO_EXTENSIONS)} are supported."
+                )
+                merged.append(row0)
+                continue
 
             merged_name = "_".join(bases) + ".wav"
 
@@ -696,6 +736,8 @@ class ProcessedMetadataValidation:
             row0["original_recordings"] = ", ".join(
                 [r["recording"] for _, r in grp.iterrows()]
             )
+            row0["skip_upload"] = False
+            row0["skip_reason"] = None
             merged.append(row0)
 
         self.transformed_df = pd.DataFrame(merged)
