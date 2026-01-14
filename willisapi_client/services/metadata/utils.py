@@ -12,9 +12,16 @@ from .language_choices import (
 )
 from dateutil import parser
 
-ALLOWED_COA_NAMES = ["MADRS", "YMRS", "PHQ-9", "GAD-7", "HAM-D17"]
+ALLOWED_COA_NAMES = ["MADRS", "YMRS", "PHQ-9", "GAD-7", "HAM-D17", "HAMD17"]
 
-COA_ITEM_COUNTS = {"MADRS": 10, "YMRS": 10, "PHQ-9": 9, "GAD-7": 7, "HAM-D17": 17}
+COA_ITEM_COUNTS = {
+    "MADRS": 10,
+    "YMRS": 10,
+    "PHQ-9": 9,
+    "GAD-7": 7,
+    "HAM-D17": 17,
+    "HAMD17": 17,
+}
 
 
 class MetadataValidation:
