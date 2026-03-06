@@ -16,6 +16,8 @@ from willisapi_client.services.metadata.utils import (
     get_last_n_directories,
 )
 
+VALID_SCORE_TYPES = ["rater", "reviewer"]
+
 
 @measure
 def upload(api_key: str, csv_path: str, **kwargs):
@@ -101,6 +103,13 @@ def upload(api_key: str, csv_path: str, **kwargs):
 @measure
 def processed_upload(api_key: str, csv_path: str, output_path: str, **kwargs):
 
+    score_type = kwargs.get("score_type", "rater")
+    if score_type not in VALID_SCORE_TYPES:
+        logger.error(
+            f"Invalid score_type '{score_type}'. Allowed values: {', '.join(VALID_SCORE_TYPES)}"
+        )
+        return None
+
     force_upload = kwargs.get("force_upload", False)
     csv = ProcessedMetadataValidation(csv_path=csv_path, force_upload=force_upload)
     if csv.load_and_validate():
@@ -136,7 +145,7 @@ def processed_upload(api_key: str, csv_path: str, output_path: str, **kwargs):
                             "checksum": checksum,
                         }
                     )
-                payload = u.generate_processed_payload(files)
+                payload = u.generate_processed_payload(files, score_type=score_type)
                 res = u.post(api_key, url, headers, payload)
                 if res.get("upload_status") == "Success":
                     result_row["upload_status"] = "Success"

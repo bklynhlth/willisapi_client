@@ -464,7 +464,9 @@ class UploadUtils:
         }
         return payload
 
-    def generate_processed_payload(self, files: List[Dict[str, str]]) -> Dict[str, Any]:
+    def generate_processed_payload(
+        self, files: List[Dict[str, str]], score_type: str = "rater"
+    ) -> Dict[str, Any]:
         payload = {
             "study_id": self.row.study_id,
             "site_id": self.row.site_id,
@@ -479,10 +481,8 @@ class UploadUtils:
             "files": files,
             "force_upload": self.row.force_upload,
             "timestamp": parser.parse(self.row.timestamp).isoformat(),
+            "score_type": score_type,
         }
-        score_type = getattr(self.row, "score_type", None)
-        if score_type:
-            payload["score_type"] = score_type
         site_country = getattr(self.row, "site_country", None)
         if site_country:
             payload["site_country"] = site_country
@@ -518,9 +518,7 @@ class ProcessedMetadataValidation:
         "workflow",
     ]
 
-    OPTIONAL_COLUMNS = ["rater_id", "language", "score_type", "site_country"]
-
-    VALID_SCORE_TYPES = ["rater", "reviewer"]
+    OPTIONAL_COLUMNS = ["rater_id", "language", "site_country"]
 
     def __init__(
         self,
@@ -603,29 +601,6 @@ class ProcessedMetadataValidation:
             return False
         return True
 
-    def validate_score_type(self) -> bool:
-        """
-        Validate that score_type values are 'rater' or 'reviewer' if the column is present.
-
-        Returns:
-            bool: True if validation passes, False otherwise
-        """
-        if "score_type" not in self.df.columns:
-            return True
-
-        # Ignore null values (column is optional per-row)
-        non_null = self.df["score_type"].dropna()
-        invalid = non_null[~non_null.isin(self.VALID_SCORE_TYPES)]
-
-        if not invalid.empty:
-            invalid_values = invalid.unique().tolist()
-            self.errors.append(
-                f"Invalid score_type values found: {invalid_values}. "
-                f"Allowed values are: {', '.join(self.VALID_SCORE_TYPES)}"
-            )
-            return False
-        return True
-
     def load_and_validate(self) -> bool:
         """
         Load CSV and run all validations.
@@ -647,7 +622,6 @@ class ProcessedMetadataValidation:
             self.validate_columns(),
             self.validate_data_types(),
             self.validate_coa_names(),
-            self.validate_score_type(),
         ]
 
         return all(validations)
