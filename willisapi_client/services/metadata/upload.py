@@ -111,7 +111,9 @@ def processed_upload(api_key: str, csv_path: str, output_path: str, **kwargs):
         return None
 
     force_upload = kwargs.get("force_upload", False)
-    csv = ProcessedMetadataValidation(csv_path=csv_path, force_upload=force_upload)
+    csv = ProcessedMetadataValidation(
+        csv_path=csv_path, force_upload=force_upload, score_type=score_type
+    )
     if csv.load_and_validate():
         logger.info(f'{datetime.now().strftime("%H:%M:%S")}: csv check passed')
         csv.create_final_csv()
@@ -130,9 +132,16 @@ def processed_upload(api_key: str, csv_path: str, output_path: str, **kwargs):
             valid, err = u.validate_processed_data_row()
             result_row = row.to_dict()
             if valid:
-                filename = os.path.basename(row.recording).split(".")[0]
+                recording_val = getattr(row, "recording", None)
+                filename = (
+                    os.path.basename(recording_val).split(".")[0]
+                    if recording_val
+                    else None
+                )
                 files = []
-                for file in find_files_with_pattern(output_path, filename):
+                for file in (
+                    find_files_with_pattern(output_path, filename) if filename else []
+                ):
                     key, error = get_last_n_directories(file, n=2)
                     if error:
                         continue

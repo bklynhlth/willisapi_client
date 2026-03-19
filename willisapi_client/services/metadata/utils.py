@@ -467,6 +467,7 @@ class UploadUtils:
     def generate_processed_payload(
         self, files: List[Dict[str, str]], score_type: str = "rater"
     ) -> Dict[str, Any]:
+        recording_val = getattr(self.row, "recording", None)
         payload = {
             "study_id": self.row.study_id,
             "site_id": self.row.site_id,
@@ -476,7 +477,7 @@ class UploadUtils:
             "visit_id": self.row.visit_id,
             "visit_order": int(self.row.visit_order),
             "coa_id": self.row.coa_id,
-            "filename": os.path.basename(self.row.recording),
+            "filename": os.path.basename(recording_val) if recording_val else "",
             "actual_scores": json.loads(self.row.scores_actual),
             "files": files,
             "force_upload": self.row.force_upload,
@@ -513,17 +514,17 @@ class ProcessedMetadataValidation:
         "visit_order",
         "coa_id",
         "timestamp",
-        "recording",
         "recording_order",
         "workflow",
     ]
 
-    OPTIONAL_COLUMNS = ["rater_id", "language", "site_country"]
+    OPTIONAL_COLUMNS = ["rater_id", "language", "site_country", "age", "sex", "race"]
 
     def __init__(
         self,
         csv_path: str,
         force_upload: bool = False,
+        score_type: str = "rater",
     ):
         """
         Initialize validator with CSV file path.
@@ -536,6 +537,7 @@ class ProcessedMetadataValidation:
         self.errors = []
         self.transformed_df = None
         self.force_upload = force_upload
+        self.score_type = score_type
 
     def validate_columns(self) -> bool:
         """
@@ -551,6 +553,28 @@ class ProcessedMetadataValidation:
         if missing_cols:
             self.errors.append(f"Missing required columns: {', '.join(missing_cols)}")
             return False
+        return True
+
+    def validate_recording_field(self) -> bool:
+        """
+        Validate the recording column based on score_type.
+        - rater:    recording column must be present and non-blank for every row.
+        - reviewer: recording column may be absent or blank.
+        """
+        if self.score_type == "rater":
+            if "recording" not in self.df.columns:
+                self.errors.append(
+                    "Missing required column: recording (required when score_type='rater')"
+                )
+                return False
+            blank_mask = self.df["recording"].isna() | (
+                self.df["recording"].astype(str).str.strip() == ""
+            )
+            if blank_mask.any():
+                self.errors.append(
+                    "recording must not be blank when score_type='rater'"
+                )
+                return False
         return True
 
     def validate_data_types(self) -> bool:
@@ -620,6 +644,7 @@ class ProcessedMetadataValidation:
 
         validations = [
             self.validate_columns(),
+            self.validate_recording_field(),
             self.validate_data_types(),
             self.validate_coa_names(),
         ]
