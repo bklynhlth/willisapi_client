@@ -12,9 +12,16 @@ from .language_choices import (
 )
 from dateutil import parser
 
-ALLOWED_COA_NAMES = ["MADRS", "YMRS", "PHQ-9", "GAD-7", "HAM-D17"]
+ALLOWED_COA_NAMES = ["MADRS", "YMRS", "PHQ-9", "GAD-7", "HAM-D17", "HAMD17"]
 
-COA_ITEM_COUNTS = {"MADRS": 10, "YMRS": 10, "PHQ-9": 9, "GAD-7": 7, "HAM-D17": 17}
+COA_ITEM_COUNTS = {
+    "MADRS": 10,
+    "YMRS": 10,
+    "PHQ-9": 9,
+    "GAD-7": 7,
+    "HAM-D17": 17,
+    "HAMD17": 17,
+}
 
 
 class MetadataValidation:
@@ -453,11 +460,14 @@ class UploadUtils:
             "checksum": self.calculate_file_checksum(self.row.file_path),
             "recording_order": int(self.row.recording_order),
             "is_last_recording": self.row.is_last_recording,
-            "timestamp": parser.parse(self.row.timestamp).isoformat(),
+            # "time_collected": parser.parse(self.row.time_collected).isoformat(),
         }
         return payload
 
-    def generate_processed_payload(self, files: List[Dict[str, str]]) -> Dict[str, Any]:
+    def generate_processed_payload(
+        self, files: List[Dict[str, str]], score_type: str = "rater"
+    ) -> Dict[str, Any]:
+        recording_val = getattr(self.row, "recording", None)
         payload = {
             "study_id": self.row.study_id,
             "site_id": self.row.site_id,
@@ -467,12 +477,16 @@ class UploadUtils:
             "visit_id": self.row.visit_id,
             "visit_order": int(self.row.visit_order),
             "coa_id": self.row.coa_id,
-            "filename": os.path.basename(self.row.recording),
+            "filename": os.path.basename(recording_val) if recording_val else "",
             "actual_scores": json.loads(self.row.scores_actual),
             "files": files,
             "force_upload": self.row.force_upload,
             "timestamp": parser.parse(self.row.timestamp).isoformat(),
+            "score_type": score_type,
         }
+        site_country = getattr(self.row, "site_country", None)
+        if site_country:
+            payload["site_country"] = site_country
         return payload
 
     def post(
@@ -500,17 +514,17 @@ class ProcessedMetadataValidation:
         "visit_order",
         "coa_id",
         "timestamp",
-        "recording",
         "recording_order",
         "workflow",
     ]
 
-    OPTIONAL_COLUMNS = ["rater_id", "language"]
+    OPTIONAL_COLUMNS = ["rater_id", "language", "site_country", "age", "sex", "race"]
 
     def __init__(
         self,
         csv_path: str,
         force_upload: bool = False,
+        score_type: str = "rater",
     ):
         """
         Initialize validator with CSV file path.
@@ -523,6 +537,7 @@ class ProcessedMetadataValidation:
         self.errors = []
         self.transformed_df = None
         self.force_upload = force_upload
+        self.score_type = score_type
 
     def validate_columns(self) -> bool:
         """
@@ -538,6 +553,28 @@ class ProcessedMetadataValidation:
         if missing_cols:
             self.errors.append(f"Missing required columns: {', '.join(missing_cols)}")
             return False
+        return True
+
+    def validate_recording_field(self) -> bool:
+        """
+        Validate the recording column based on score_type.
+        - rater:    recording column must be present and non-blank for every row.
+        - reviewer: recording column may be absent or blank.
+        """
+        if self.score_type == "rater":
+            if "recording" not in self.df.columns:
+                self.errors.append(
+                    "Missing required column: recording (required when score_type='rater')"
+                )
+                return False
+            blank_mask = self.df["recording"].isna() | (
+                self.df["recording"].astype(str).str.strip() == ""
+            )
+            if blank_mask.any():
+                self.errors.append(
+                    "recording must not be blank when score_type='rater'"
+                )
+                return False
         return True
 
     def validate_data_types(self) -> bool:
@@ -607,6 +644,7 @@ class ProcessedMetadataValidation:
 
         validations = [
             self.validate_columns(),
+            self.validate_recording_field(),
             self.validate_data_types(),
             self.validate_coa_names(),
         ]
