@@ -5,6 +5,10 @@ import requests
 import mimetypes
 import os
 
+# Register extensions that Python's default mimetypes table doesn't know about.
+# The server signs presigned URLs with these types, so the client must match.
+mimetypes.add_type("application/vnd.apache.parquet", ".parquet")
+
 from willisapi_client.timer import measure
 from willisapi_client.willisapi_client import WillisapiClient
 from willisapi_client.logging_setup import logger as logger
