@@ -40,5 +40,11 @@ class WillisapiClient:
     def get_processed_upload_url(self):
         return self.get_base_v2_url() + "metadata/processed-data/upload"
 
+    def get_csv_archive_url(self):
+        return self.get_base_v2_url() + "metadata/csv-archive"
+
+    def get_csv_archive_finalize_url(self, record_id):
+        return self.get_csv_archive_url() + f"/{record_id}"
+
     def get_headers(self):
         return {"Content-Type": "application/json", "Accept": "application/json"}
