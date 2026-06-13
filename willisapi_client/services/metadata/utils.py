@@ -421,13 +421,15 @@ class UploadUtils:
     def validate_row(self):
         if not os.path.exists(self.row.file_path):
             return (False, "File path does not exist")
-        if self.row.language not in LANGUAGE_CHOICES:
-            return (False, f"Invalid language: {self.row.language}")
+        language = getattr(self.row, "language", None)
+        if language and language not in LANGUAGE_CHOICES:
+            return (False, f"Invalid language: {language}")
         return (True, None)
 
     def validate_processed_data_row(self):
-        if self.row.language not in LANGUAGE_CHOICES:
-            return (False, f"Invalid language: {self.row.language}")
+        language = getattr(self.row, "language", None)
+        if language and language not in LANGUAGE_CHOICES:
+            return (False, f"Invalid language: {language}")
         return (True, None)
 
     def calculate_file_checksum(self, file_path: str) -> str:
