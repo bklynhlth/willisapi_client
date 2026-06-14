@@ -19,6 +19,10 @@ from willisapi_client.services.metadata.utils import (
     find_files_with_pattern,
     get_last_n_directories,
 )
+from willisapi_client.services.metadata.archive import (
+    archive_metadata_csv,
+    finalize_metadata_csv,
+)
 
 VALID_SCORE_TYPES = ["rater", "reviewer"]
 
@@ -37,6 +41,15 @@ def upload(api_key: str, csv_path: str, **kwargs):
         headers = wc.get_headers()
         headers["Authorization"] = f"token {api_key}"
         logger.info(f'{datetime.now().strftime("%H:%M:%S")}: beginning upload')
+
+        # Archive the source metadata CSV and open a tracking record.
+        archive_record_id = archive_metadata_csv(
+            api_key,
+            csv_path,
+            int(csv.transformed_df.shape[0]),
+            upload_type="data",
+            env=kwargs.get("env"),
+        )
 
         results = []
         for index, row in tqdm(
@@ -96,6 +109,16 @@ def upload(api_key: str, csv_path: str, **kwargs):
                 result_row["error"] = f"{err}"
             results.append(result_row)
 
+        successful_rows = sum(1 for r in results if r.get("upload_status") == "Success")
+        finalize_metadata_csv(
+            api_key,
+            archive_record_id,
+            "successful",
+            successful_rows,
+            len(results) - successful_rows,
+            env=kwargs.get("env"),
+        )
+
         results_df = pd.DataFrame(results)
         return results_df
     else:
@@ -127,6 +150,15 @@ def processed_upload(api_key: str, csv_path: str, output_path: str, **kwargs):
         headers = wc.get_headers()
         headers["Authorization"] = f"token {api_key}"
         logger.info(f'{datetime.now().strftime("%H:%M:%S")}: beginning upload')
+
+        # Archive the source processed-data metadata CSV and open a tracking record.
+        archive_record_id = archive_metadata_csv(
+            api_key,
+            csv_path,
+            int(csv.transformed_df.shape[0]),
+            upload_type="processed_data",
+            env=kwargs.get("env"),
+        )
 
         results = []
         for index, row in tqdm(
@@ -204,6 +236,16 @@ def processed_upload(api_key: str, csv_path: str, output_path: str, **kwargs):
                 result_row["upload_status"] = "Failed"
                 result_row["error"] = f"{err}"
             results.append(result_row)
+
+        successful_rows = sum(1 for r in results if r.get("upload_status") == "Success")
+        finalize_metadata_csv(
+            api_key,
+            archive_record_id,
+            "successful",
+            successful_rows,
+            len(results) - successful_rows,
+            env=kwargs.get("env"),
+        )
 
         results_df = pd.DataFrame(results)
         return results_df
