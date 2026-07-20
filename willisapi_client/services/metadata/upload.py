@@ -51,6 +51,7 @@ def _put_file_to_s3(file_presigned: dict):
                     "x-amz-sdk-checksum-algorithm": "SHA256",
                     "Content-Type": content_type,
                 },
+                timeout=(10, 300),
             )
         if response.status_code != 200:
             return (
@@ -120,6 +121,7 @@ def upload(api_key: str, csv_path: str, **kwargs):
                                         "x-amz-sdk-checksum-algorithm": "SHA256",
                                         "Content-Type": content_type,
                                     },
+                                    timeout=(10, 300),
                                 )
                             if response.status_code == 200:
                                 result_row["upload_status"] = "Success"
