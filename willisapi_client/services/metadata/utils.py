@@ -6,6 +6,7 @@ import os
 import hashlib
 import base64
 import requests
+from functools import lru_cache
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from urllib.parse import urlsplit
@@ -16,7 +17,7 @@ from dateutil import parser
 
 ALLOWED_COA_NAMES = ["MADRS", "YMRS", "PHQ-9", "GAD-7", "HAM-D17", "HAMD17"]
 
-
+@lru_cache(maxsize=None)
 def build_retry_session(total: int = 3, backoff_factor: float = 1) -> requests.Session:
     """Return a requests Session that retries transient network failures.
 
@@ -35,7 +36,8 @@ def build_retry_session(total: int = 3, backoff_factor: float = 1) -> requests.S
         allowed_methods=["PUT", "POST"],
         raise_on_status=False,
     )
-    adapter = HTTPAdapter(max_retries=retry)
+    # Increased pool size to accommodate concurrent ThreadPoolExecutor uploads
+    adapter = HTTPAdapter(max_retries=retry, pool_connections=100, pool_maxsize=100)
     session = requests.Session()
     session.mount("https://", adapter)
     session.mount("http://", adapter)
