@@ -17,6 +17,7 @@ from willisapi_client.services.metadata.utils import (
     MetadataValidation,
     ProcessedMetadataValidation,
     UploadUtils,
+    build_retry_session,
     find_files_with_pattern,
     get_last_n_directories,
 )
@@ -43,7 +44,8 @@ def _put_file_to_s3(file_presigned: dict):
         if not content_type:
             content_type = "text/csv"
         with open(recording, "rb") as f:
-            response = requests.put(
+            session = build_retry_session()
+            response = session.put(
                 presigned,
                 data=f,
                 headers={
@@ -111,7 +113,8 @@ def upload(api_key: str, csv_path: str, **kwargs):
                             if not content_type:
                                 content_type = "application/octet-stream"
                             with open(row.file_path, "rb") as f:
-                                response = requests.put(
+                                session = build_retry_session()
+                                response = session.put(
                                     presigned,
                                     data=f,
                                     headers={

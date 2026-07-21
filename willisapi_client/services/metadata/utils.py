@@ -6,6 +6,8 @@ import os
 import hashlib
 import base64
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from urllib.parse import urlsplit
 from .language_choices import (
     LANGUAGE_CHOICES,
@@ -13,6 +15,31 @@ from .language_choices import (
 from dateutil import parser
 
 ALLOWED_COA_NAMES = ["MADRS", "YMRS", "PHQ-9", "GAD-7", "HAM-D17", "HAMD17"]
+
+
+def build_retry_session(total: int = 3, backoff_factor: float = 1) -> requests.Session:
+    """Return a requests Session that retries transient network failures.
+
+    Retries connection errors (e.g. ConnectionResetError / 'Connection reset
+    by peer') and 5xx gateway responses with exponential backoff. Applied to
+    both the metadata POST and the S3 PUT uploads so a momentary blip on a
+    single record no longer fails the whole upload for that row.
+    """
+    retry = Retry(
+        total=total,
+        connect=total,
+        read=total,
+        status=total,
+        backoff_factor=backoff_factor,
+        status_forcelist=[502, 503, 504],
+        allowed_methods=["PUT", "POST"],
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session = requests.Session()
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    return session
 
 COA_ITEM_COUNTS = {
     "MADRS": 10,
@@ -495,7 +522,10 @@ class UploadUtils:
         self, api_key: str, url: str, headers: Dict[str, str], payload: Dict[str, Any]
     ) -> Dict[str, Any]:
         try:
-            response = requests.post(url, headers=headers, json=payload)
+            session = build_retry_session()
+            response = session.post(
+                url, headers=headers, json=payload, timeout=(10, 300)
+            )
             res_json = response.json()
 
         except Exception as ex:
