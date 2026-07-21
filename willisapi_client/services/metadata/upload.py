@@ -4,6 +4,7 @@ from datetime import datetime
 import requests
 import mimetypes
 import os
+import time
 from concurrent.futures import ThreadPoolExecutor
 
 # Register extensions that Python's default mimetypes table doesn't know about.
@@ -201,6 +202,12 @@ def processed_upload(api_key: str, csv_path: str, output_path: str, **kwargs):
         )
 
         results = []
+        # Throttle S3 uploads: pause 3s each time the running total of files
+        # sent to S3 crosses another 100, to avoid overwhelming the connection.
+        S3_SLEEP_EVERY = 100
+        S3_SLEEP_SECONDS = 3
+        s3_uploaded_total = 0
+        next_sleep_threshold = S3_SLEEP_EVERY
         for index, row in tqdm(
             csv.transformed_df.iterrows(), total=csv.transformed_df.shape[0]
         ):
@@ -254,6 +261,11 @@ def processed_upload(api_key: str, csv_path: str, output_path: str, **kwargs):
                             ):
                                 if error:
                                     s3_errors.append(error)
+                        # Pause after every 100 files uploaded to S3.
+                        s3_uploaded_total += len(files_to_upload)
+                        while s3_uploaded_total >= next_sleep_threshold:
+                            time.sleep(S3_SLEEP_SECONDS)
+                            next_sleep_threshold += S3_SLEEP_EVERY
                     if s3_errors:
                         result_row["upload_status"] = "Failed"
                         result_row["error"] = "\n".join(s3_errors)
