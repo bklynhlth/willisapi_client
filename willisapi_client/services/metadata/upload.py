@@ -4,6 +4,8 @@ from datetime import datetime
 import requests
 import mimetypes
 import os
+import time
+from concurrent.futures import ThreadPoolExecutor
 
 # Register extensions that Python's default mimetypes table doesn't know about.
 # The server signs presigned URLs with these types, so the client must match.
@@ -16,6 +18,7 @@ from willisapi_client.services.metadata.utils import (
     MetadataValidation,
     ProcessedMetadataValidation,
     UploadUtils,
+    build_retry_session,
     find_files_with_pattern,
     get_last_n_directories,
 )
@@ -25,6 +28,42 @@ from willisapi_client.services.metadata.archive import (
 )
 
 VALID_SCORE_TYPES = ["rater", "reviewer"]
+
+
+def _put_file_to_s3(file_presigned: dict):
+    """Upload a single file to its presigned S3 URL.
+
+    Returns an error string if the upload fails, otherwise None. Presigned
+    URLs from a single recording are all signed at once and share one expiry
+    window, so callers should run these concurrently to fit within it.
+    """
+    presigned = file_presigned.get("presigned")
+    checksum = file_presigned.get("checksum")
+    recording = file_presigned.get("recording")
+    try:
+        content_type, _ = mimetypes.guess_type(recording)
+        if not content_type:
+            content_type = "text/csv"
+        with open(recording, "rb") as f:
+            session = build_retry_session()
+            response = session.put(
+                presigned,
+                data=f,
+                headers={
+                    "x-amz-checksum-sha256": checksum,
+                    "x-amz-sdk-checksum-algorithm": "SHA256",
+                    "Content-Type": content_type,
+                },
+                timeout=(10, 300),
+            )
+        if response.status_code != 200:
+            return (
+                f"S3 upload failed with status code {response.status_code} "
+                f"for file {recording}: {response.text}"
+            )
+    except Exception as ex:
+        return str(ex)
+    return None
 
 
 @measure
@@ -75,7 +114,8 @@ def upload(api_key: str, csv_path: str, **kwargs):
                             if not content_type:
                                 content_type = "application/octet-stream"
                             with open(row.file_path, "rb") as f:
-                                response = requests.put(
+                                session = build_retry_session()
+                                response = session.put(
                                     presigned,
                                     data=f,
                                     headers={
@@ -85,13 +125,14 @@ def upload(api_key: str, csv_path: str, **kwargs):
                                         "x-amz-sdk-checksum-algorithm": "SHA256",
                                         "Content-Type": content_type,
                                     },
+                                    timeout=(10, 300),
                                 )
                             if response.status_code == 200:
                                 result_row["upload_status"] = "Success"
                             else:
                                 result_row["upload_status"] = "Failed"
                                 result_row["error"] = (
-                                    f"S3 upload failed with status code {response.status_code}"
+                                    f"S3 upload failed with status code {response.status_code}: {response.text}"
                                 )
                         except Exception as ex:
                             result_row["upload_status"] = "Failed"
@@ -161,6 +202,12 @@ def processed_upload(api_key: str, csv_path: str, output_path: str, **kwargs):
         )
 
         results = []
+        # Throttle S3 uploads: pause 3s each time the running total of files
+        # sent to S3 crosses another 100, to avoid overwhelming the connection.
+        S3_SLEEP_EVERY = 100
+        S3_SLEEP_SECONDS = 3
+        s3_uploaded_total = 0
+        next_sleep_threshold = S3_SLEEP_EVERY
         for index, row in tqdm(
             csv.transformed_df.iterrows(), total=csv.transformed_df.shape[0]
         ):
@@ -199,33 +246,26 @@ def processed_upload(api_key: str, csv_path: str, output_path: str, **kwargs):
                     result_row["upload_status"] = "Success"
                     result_row["error"] = None
 
-                    # Handle S3 upload if presigned URL is provided
+                    # Upload every file for this recording concurrently. All
+                    # presigned URLs in this response share one short expiry
+                    # window, so uploading them sequentially risks the later
+                    # files expiring (403). A thread pool sized to the CPU
+                    # count keeps them within the window (I/O-bound work).
+                    files_to_upload = res.get("response", [])
                     s3_errors = []
-                    for file_presigned in res.get("response", []):
-                        presigned = file_presigned.get("presigned")
-                        checksum = file_presigned.get("checksum")
-                        recording = file_presigned.get("recording")
-                        index = file_presigned.get("index")
-                        try:
-                            content_type, _ = mimetypes.guess_type(recording)
-                            if not content_type:
-                                content_type = "text/csv"
-                            with open(recording, "rb") as f:
-                                response = requests.put(
-                                    presigned,
-                                    data=f,
-                                    headers={
-                                        "x-amz-checksum-sha256": checksum,
-                                        "x-amz-sdk-checksum-algorithm": "SHA256",
-                                        "Content-Type": content_type,
-                                    },
-                                )
-                            if response.status_code != 200:
-                                s3_errors.append(
-                                    f"S3 upload failed with status code {response.status_code} for file {recording}"
-                                )
-                        except Exception as ex:
-                            s3_errors.append(str(ex))
+                    if files_to_upload:
+                        max_workers = min(len(files_to_upload), os.cpu_count() or 1)
+                        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                            for error in executor.map(
+                                _put_file_to_s3, files_to_upload
+                            ):
+                                if error:
+                                    s3_errors.append(error)
+                        # Pause after every 100 files uploaded to S3.
+                        s3_uploaded_total += len(files_to_upload)
+                        while s3_uploaded_total >= next_sleep_threshold:
+                            time.sleep(S3_SLEEP_SECONDS)
+                            next_sleep_threshold += S3_SLEEP_EVERY
                     if s3_errors:
                         result_row["upload_status"] = "Failed"
                         result_row["error"] = "\n".join(s3_errors)
