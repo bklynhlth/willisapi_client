@@ -7,9 +7,16 @@ import os
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-# Register extensions that Python's default mimetypes table doesn't know about.
-# The server signs presigned URLs with these types, so the client must match.
-mimetypes.add_type("application/vnd.apache.parquet", ".parquet")
+# The server signs presigned URLs with Content-Types guessed from Python's
+# built-in mimetypes table (on Linux), so the client must produce identical
+# guesses. A private MimeTypes instance holds only that built-in table —
+# the module-level mimetypes.guess_type() on Windows also reads the registry
+# (e.g. .csv -> application/vnd.ms-excel, .wav -> audio/wav), which makes the
+# PUT's Content-Type differ from the signed one and S3 reject the upload with
+# SignatureDoesNotMatch. Also register extensions the built-in table lacks,
+# mirroring the server.
+_MIME_TYPES = mimetypes.MimeTypes()
+_MIME_TYPES.add_type("application/vnd.apache.parquet", ".parquet")
 
 from willisapi_client.timer import measure
 from willisapi_client.willisapi_client import WillisapiClient
@@ -41,9 +48,11 @@ def _put_file_to_s3(file_presigned: dict):
     checksum = file_presigned.get("checksum")
     recording = file_presigned.get("recording")
     try:
-        content_type, _ = mimetypes.guess_type(recording)
+        content_type, _ = _MIME_TYPES.guess_type(recording)
         if not content_type:
-            content_type = "text/csv"
+            # Mirror the server's fallback — it signs the presigned URL with
+            # this Content-Type when the extension is unknown.
+            content_type = "application/octet-stream"
         with open(recording, "rb") as f:
             session = build_retry_session()
             response = session.put(
@@ -108,7 +117,7 @@ def upload(api_key: str, csv_path: str, **kwargs):
                     presigned = res.get("response", {}).get("presigned")
                     if presigned:
                         try:
-                            content_type, _ = mimetypes.guess_type(
+                            content_type, _ = _MIME_TYPES.guess_type(
                                 payload.get("filename")
                             )
                             if not content_type:

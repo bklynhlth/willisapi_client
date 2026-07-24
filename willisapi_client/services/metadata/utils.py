@@ -3,6 +3,7 @@ import numpy as np
 from typing import List, Dict, Any, Tuple
 import json
 import os
+import posixpath
 import hashlib
 import base64
 import requests
@@ -757,7 +758,8 @@ class ProcessedMetadataValidation:
             orig_bucket, orig_key = _get_bucket_n_key_path_from_s3url(
                 grp.iloc[0]["recording"]
             )
-            merged_key = os.path.join(os.path.dirname(orig_key), merged_name)
+            # S3 keys always use "/" — os.path.join would insert "\" on Windows.
+            merged_key = posixpath.join(posixpath.dirname(orig_key), merged_name)
 
             # Create new URI (no upload, logical merge only)
             new_uri = f"s3://{orig_bucket}/{merged_key}"
@@ -810,9 +812,11 @@ def get_last_n_directories(filepath, n=3):
     result = None
     error = None
     try:
-        parts = filepath.split(os.sep)
+        # Normalize Windows backslashes so the result is always a
+        # forward-slash S3 key regardless of the local OS.
+        parts = filepath.replace("\\", "/").split("/")
         last_parts = parts[-(n + 1) :]
-        result = os.sep.join(last_parts)
+        result = "/".join(last_parts)
     except Exception as e:
         error = "Could not extract container name and container version from file path"
     return result, error
