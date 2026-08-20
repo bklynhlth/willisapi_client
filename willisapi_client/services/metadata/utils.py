@@ -473,15 +473,48 @@ class UploadUtils:
         except Exception as e:
             raise RuntimeError(f"Failed to calculate checksum: {e}")
 
+    def optional_value(self, column: str):
+        """Return a column's value only when the row actually supplies one.
+
+        Optional columns may be missing from the CSV entirely, or present but
+        empty on a given row -- pandas surfaces both as an absent attribute or
+        NaN. Passing that straight through would post the string "nan" to the
+        API and overwrite good data, so it is dropped instead. Callers omit
+        the key altogether, which the API treats as "leave this field alone".
+        """
+        value = getattr(self.row, column, None)
+        if value is None or pd.isna(value):
+            return None
+        text = str(value).strip()
+        return text or None
+
+    def demographic_fields(self) -> Dict[str, Any]:
+        """Optional demographics to send, omitting any the row leaves blank."""
+        supplied = {}
+        for column in ("sex", "race"):
+            value = self.optional_value(column)
+            if value is not None:
+                supplied[column] = value
+
+        age = self.optional_value("age")
+        if age is not None:
+            try:
+                # Via float first: pandas widens an int column to float as soon
+                # as any row is blank, so a whole-number age arrives as "42.0".
+                supplied["age"] = int(float(age))
+            except (TypeError, ValueError):
+                # MetadataValidation already reports a non-numeric age; dropping
+                # it here keeps a bad cell from failing the upload as well.
+                pass
+
+        return supplied
+
     def generate_payload(self) -> Dict[str, Any]:
         payload = {
             "study_id": self.row.study_id,
             "site_id": self.row.site_id,
             "rater_id": self.row.rater_id,
             "participant_id": self.row.participant_id,
-            "age": self.row.age,
-            "sex": self.row.sex,
-            "race": self.row.race,
             "language": self.row.language,
             "visit_name": self.row.visit_name,
             "visit_order": int(self.row.visit_order),
@@ -494,6 +527,7 @@ class UploadUtils:
             "is_last_recording": self.row.is_last_recording,
             # "time_collected": parser.parse(self.row.time_collected).isoformat(),
         }
+        payload.update(self.demographic_fields())
         return payload
 
     def generate_processed_payload(
@@ -519,6 +553,7 @@ class UploadUtils:
         site_country = getattr(self.row, "site_country", None)
         if site_country:
             payload["site_country"] = site_country
+        payload.update(self.demographic_fields())
         return payload
 
     def post(
