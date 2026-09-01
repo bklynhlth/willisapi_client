@@ -18,6 +18,7 @@ from dateutil import parser
 
 ALLOWED_COA_NAMES = ["MADRS", "YMRS", "PHQ-9", "GAD-7", "HAM-D17", "HAMD17"]
 
+
 @lru_cache(maxsize=None)
 def build_retry_session(total: int = 3, backoff_factor: float = 1) -> requests.Session:
     """Return a requests Session that retries transient network failures.
@@ -43,6 +44,7 @@ def build_retry_session(total: int = 3, backoff_factor: float = 1) -> requests.S
     session.mount("https://", adapter)
     session.mount("http://", adapter)
     return session
+
 
 COA_ITEM_COUNTS = {
     "MADRS": 10,
@@ -509,7 +511,9 @@ class UploadUtils:
 
         return supplied
 
-    def generate_payload(self) -> Dict[str, Any]:
+    def generate_payload(
+        self, record_id: str = None, is_last_row: bool = False
+    ) -> Dict[str, Any]:
         payload = {
             "study_id": self.row.study_id,
             "site_id": self.row.site_id,
@@ -528,10 +532,20 @@ class UploadUtils:
             # "time_collected": parser.parse(self.row.time_collected).isoformat(),
         }
         payload.update(self.demographic_fields())
+        # Tie this row to its CSV tracking record so the server can accumulate
+        # notification metrics; is_last_row on the final posted row triggers
+        # the server-side upload-summary notification.
+        if record_id:
+            payload["record_id"] = record_id
+            payload["is_last_row"] = bool(is_last_row)
         return payload
 
     def generate_processed_payload(
-        self, files: List[Dict[str, str]], score_type: str = "rater"
+        self,
+        files: List[Dict[str, str]],
+        score_type: str = "rater",
+        record_id: str = None,
+        is_last_row: bool = False,
     ) -> Dict[str, Any]:
         recording_val = getattr(self.row, "recording", None)
         payload = {
@@ -554,6 +568,12 @@ class UploadUtils:
         if site_country:
             payload["site_country"] = site_country
         payload.update(self.demographic_fields())
+        # Tie this row to its CSV tracking record so the server can accumulate
+        # notification metrics; is_last_row on the final posted row triggers
+        # the server-side upload-summary notification.
+        if record_id:
+            payload["record_id"] = record_id
+            payload["is_last_row"] = bool(is_last_row)
         return payload
 
     def post(
