@@ -1,120 +1,37 @@
-<!-- Output copied to clipboard! -->
+WillisAPI Client is the official Python client for interfacing with WillisAPI.
 
-<!-----
+WillisAPI allows for sharing data between third-party systems and the Willis platform, developed and maintained by Brooklyn Health. 
 
-Yay, no errors, warnings, or alerts!
+To learn more about Willis or Brooklyn Health, please visit [brooklyn.health](https://brooklyn.health).
 
-Conversion time: 0.36 seconds.
+## Installation
 
+Before you begin, we recommend creating a virtual environment for the client and using a Python version later than 3.10.
 
-Using this Markdown file:
+```shell
+pip install virtualenv
+virtualenv willisapi_client --python=3.10
+source willisapi_client/bin/activate
+```
 
-1. Paste this output into your source file.
-2. See the notes and action items below regarding this conversion run.
-3. Check the rendered output (headings, lists, code blocks, tables) for proper
-   formatting and use a linkchecker before you publish this page.
+To install WillisAPI client, run:
 
-Conversion notes:
-
-* Docs to Markdown version 1.0β34
-* Mon Aug 21 2023 13:41:56 GMT-0700 (PDT)
-* Source doc: README.md
------>
-
-
-
-### WillisAPI Client
-
-WillisAPI Client is the Python interface for Brooklyn Health’s WillisAPI.
-
-Official documentation for WillisAPI Client can be found in the [Github Wiki](http://www.github.com/bklynhlth/willisapi_client/wiki).
-
-To learn more about Brooklyn Health or WillisAPI, visit [brooklyn.health](https://www.brooklyn.health) or [getintouch@brooklyn.health](mailto:getintouch@brooklyn.health).
-
----
-
-#### Installation
-
-
-```bash
+```shell
 pip install willisapi_client
 ```
 
----
+After installation is complete, enter a python environment. Then, import the library:
 
-#### Getting a Personal Access Token (PAT)
-1. Log in to the Brooklyn Health web application.
-2. Go to your profile section.
-3. Navigate to Personal Access Token (PAT) and copy it for use in the client.
-
----
-
-#### Usage
-
-**Upload**
-To upload a CSV file:
-
-```python
-summary = willisapi.upload(key, '/path/to/data.csv')
+```py
+import willisapi_client as willisapi
 ```
 
-How to Call the Function
-- key: Your PAT token.
-- data.csv: Path to your CSV file.
+## Access
 
-How to Reupload
+To use any of the client’s functions, the user will need a personal access token (PAT).
 
-If you need to reupload the same or updated file, simply call the upload function again:
+This key will be provided to authorized users by Brooklyn Health staff. To get your key, please reach out to your technical contact at Brooklyn Health.
 
-```python
-summary = willisapi.upload(key, 'data.csv', force_uploade=True)
-```
----
-#### Understanding Returned DataFrame and Errors
+## Documentation
 
-- The upload function returns a summary DataFrame containing the results of your upload.
-- Columns typically include status, error messages, and metadata for each row in your CSV.
-- If there are errors, they will be listed in the DataFrame under an error or message column.
-- Review the DataFrame to identify and resolve any issues before reuploading.
-
----
-
-#### CSV Validation Details
-
-Before uploading, the client validates your CSV for:
-
-- **Required Columns**: Must include study_id, site_id, participant_id, visit_name, visit_order, coa_name, coa_item_number, coa_item_value, file_path, time_collected.
-- **Optional Columns**: rater_id, age, sex, race, language.
-- **Valid COA Name**: Only these values are allowed: MADRS, YMRS, PHQ-9, GAD-7.
-- **Valid Audio File**: The file path in each row must exist and be accessible.
-- **Valid Data Types**: visit_order, age, coa_item_number, and coa_item_value must be numeric.
-- **Language**: If present, must be in the allowed language choices.
-
-If any validation fails, errors are collected and returned for review before upload proceeds.
-
----
-
-**Processed Data Upload**
-
-To upload a processed data CSV file:
-
-```python
-summary = willisapi.processed_upload(key, '/path/to/processed-data.csv')
-```
-
-How to Call the Function
-- key: Your PAT token.
-- processed-data.csv: Path to your processed data CSV file.
-
----
-
-For more information on how to organize the `data.csv`, visit the [Github Wiki](http://www.github.com/bklynhlth/willisapi_client/wiki).
-
-
-If you run into trouble while using the client, please raise it in the [Issues](http://www.github.com/bklynhlth/willisapi_client/issues) tab. 
-
-***
-
-Brooklyn Health is a small team of clinicians, scientists, and engineers based in Brooklyn, NY. 
-
-We develop and maintain [OpenWillis](http://www.github.com/bklynhlth/openwillis), an open source python library for digital health measurement. 
+For complete documentation on use, please visit the [WillisAPI Client Wiki](https://github.com/bklynhlth/willisapi_client/wiki).
