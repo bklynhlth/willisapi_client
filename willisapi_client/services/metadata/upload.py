@@ -75,6 +75,21 @@ def _put_file_to_s3(file_presigned: dict):
     return None
 
 
+def _last_postable_position(df, validate) -> int:
+    """Position of the final row that will actually be Posted to the API.
+
+    Rows failing client-side validation are never sent, so the is_last_row
+    flag (which triggers the server-side upload-summary notification) must
+    ride on the last row that survives it. Returns -1 when no row will post.
+    """
+    last_pos = -1
+    for pos, (_, row) in enumerate(df.iterrows()):
+        valid, _ = validate(UploadUtils(row))
+        if valid:
+            last_pos = pos
+    return last_pos
+
+
 @measure
 def upload(api_key: str, csv_path: str, **kwargs):
 
@@ -98,16 +113,22 @@ def upload(api_key: str, csv_path: str, **kwargs):
             upload_type="data",
             env=kwargs.get("env"),
         )
+        last_post_pos = _last_postable_position(
+            csv.transformed_df, lambda u: u.validate_row()
+        )
 
         results = []
-        for index, row in tqdm(
-            csv.transformed_df.iterrows(), total=csv.transformed_df.shape[0]
+        for pos, (index, row) in enumerate(
+            tqdm(csv.transformed_df.iterrows(), total=csv.transformed_df.shape[0])
         ):
             u = UploadUtils(row)
             valid, err = u.validate_row()
             result_row = row.to_dict()
             if valid:
-                payload = u.generate_payload()
+                payload = u.generate_payload(
+                    record_id=archive_record_id,
+                    is_last_row=(pos == last_post_pos),
+                )
                 res = u.post(api_key, url, headers, payload)
                 if res.get("upload_status") == "Success":
                     result_row["upload_status"] = "Success"
@@ -209,6 +230,9 @@ def processed_upload(api_key: str, csv_path: str, output_path: str, **kwargs):
             upload_type="processed_data",
             env=kwargs.get("env"),
         )
+        last_post_pos = _last_postable_position(
+            csv.transformed_df, lambda u: u.validate_processed_data_row()
+        )
 
         results = []
         # Throttle S3 uploads: pause 3s each time the running total of files
@@ -217,8 +241,8 @@ def processed_upload(api_key: str, csv_path: str, output_path: str, **kwargs):
         S3_SLEEP_SECONDS = 3
         s3_uploaded_total = 0
         next_sleep_threshold = S3_SLEEP_EVERY
-        for index, row in tqdm(
-            csv.transformed_df.iterrows(), total=csv.transformed_df.shape[0]
+        for pos, (index, row) in enumerate(
+            tqdm(csv.transformed_df.iterrows(), total=csv.transformed_df.shape[0])
         ):
             u = UploadUtils(row)
             valid, err = u.validate_processed_data_row()
@@ -249,7 +273,12 @@ def processed_upload(api_key: str, csv_path: str, output_path: str, **kwargs):
                                 "checksum": checksum,
                             }
                         )
-                payload = u.generate_processed_payload(files, score_type=score_type)
+                payload = u.generate_processed_payload(
+                    files,
+                    score_type=score_type,
+                    record_id=archive_record_id,
+                    is_last_row=(pos == last_post_pos),
+                )
                 res = u.post(api_key, url, headers, payload)
                 if res.get("upload_status") == "Success":
                     result_row["upload_status"] = "Success"
@@ -265,9 +294,7 @@ def processed_upload(api_key: str, csv_path: str, output_path: str, **kwargs):
                     if files_to_upload:
                         max_workers = min(len(files_to_upload), os.cpu_count() or 1)
                         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                            for error in executor.map(
-                                _put_file_to_s3, files_to_upload
-                            ):
+                            for error in executor.map(_put_file_to_s3, files_to_upload):
                                 if error:
                                     s3_errors.append(error)
                         # Pause after every 100 files uploaded to S3.
