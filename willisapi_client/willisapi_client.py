@@ -46,5 +46,8 @@ class WillisapiClient:
     def get_csv_archive_finalize_url(self, record_id):
         return self.get_csv_archive_url() + f"/{record_id}"
 
+    def get_refresh_api_key_url(self):
+        return self.get_base_v2_url() + "auth/api-key/refresh"
+
     def get_headers(self):
         return {"Content-Type": "application/json", "Accept": "application/json"}
