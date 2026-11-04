@@ -1,9 +1,13 @@
 import json
+import sys
 from unittest.mock import MagicMock, patch
 
 from willisapi_client.services.metadata.coa_upload import coa_upload
 
-MODULE = "willisapi_client.services.metadata.coa_upload"
+# The package re-exports the function ``coa_upload``, which shadows this module
+# as an attribute; Python 3.9's ``patch("pkg.mod.name")`` resolves by getattr and
+# would land on the function, so patch the module object itself.
+MODULE = sys.modules["willisapi_client.services.metadata.coa_upload"]
 
 
 def odm(form=True, attachments=()):
@@ -89,14 +93,14 @@ class TestCOAUpload:
 
     def test_missing_attachment_file_fails_before_any_request(self, tmp_path):
         data = odm(attachments=[("IT.RECORDING_PATH.0", str(tmp_path / "a.mp4"))])
-        with patch(f"{MODULE}.archive_metadata_csv") as archive:
+        with patch.object(MODULE, "archive_metadata_csv") as archive:
             res = coa_upload("key", write(tmp_path, data))
         assert any("file not found" in e for e in res["errors"])
         archive.assert_not_called()
 
-    @patch(f"{MODULE}._put_file_to_s3", return_value=None)
-    @patch(f"{MODULE}.build_retry_session")
-    @patch(f"{MODULE}.archive_metadata_csv", return_value="rec-1")
+    @patch.object(MODULE, "_put_file_to_s3", return_value=None)
+    @patch.object(MODULE, "build_retry_session")
+    @patch.object(MODULE, "archive_metadata_csv", return_value="rec-1")
     def test_success_archives_json_posts_and_uploads_files(
         self, archive, session, put, tmp_path
     ):
@@ -135,8 +139,8 @@ class TestCOAUpload:
         assert res["attachments"][0]["upload_status"] == "Success"
         assert "presigned" not in res["attachments"][0]
 
-    @patch(f"{MODULE}.build_retry_session")
-    @patch(f"{MODULE}.archive_metadata_csv", return_value="rec-1")
+    @patch.object(MODULE, "build_retry_session")
+    @patch.object(MODULE, "archive_metadata_csv", return_value="rec-1")
     def test_request_level_rejection_is_reported(self, archive, session, tmp_path):
         response = MagicMock(status_code=400)
         response.json.return_value = {"record_id": ["Upload record not found."]}
