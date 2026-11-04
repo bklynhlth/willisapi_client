@@ -5,12 +5,14 @@ from willisapi_client.services.api import (
     willis_diarize_call_remaining,
     willis_diarize,
     upload,
-    processed_upload
+    processed_upload,
+    coa_upload,
 )
 
 __all__ = [
     "willis_diarize_call_remaining",
     "willis_diarize",
     "upload",
-    "processed_upload"
+    "processed_upload",
+    "coa_upload",
 ]
