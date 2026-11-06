@@ -13,7 +13,9 @@ def _archive_headers(api_key):
     }
 
 
-def archive_metadata_csv(api_key, csv_path, total_rows, upload_type, env=None):
+def archive_metadata_csv(
+    api_key, csv_path, total_rows, upload_type, env=None, content_type="text/csv"
+):
     """Archive the source metadata CSV alongside the data upload.
 
     Creates a server-side tracking row, then PUTs the raw CSV to the returned
@@ -46,7 +48,7 @@ def archive_metadata_csv(api_key, csv_path, total_rows, upload_type, env=None):
 
         with open(csv_path, "rb") as f:
             put_res = requests.put(
-                presigned, data=f, headers={"Content-Type": "text/csv"}
+                presigned, data=f, headers={"Content-Type": content_type}
             )
         if put_res.status_code not in (200, 204):
             logger.warning(f"CSV archive S3 upload failed: {put_res.status_code}")
