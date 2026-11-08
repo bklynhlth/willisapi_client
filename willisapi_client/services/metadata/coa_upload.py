@@ -1,13 +1,18 @@
 import base64
 import hashlib
 import json
+import math
 import os
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
 from willisapi_client.logging_setup import logger as logger
 from willisapi_client.services.metadata.archive import archive_metadata_csv
-from willisapi_client.services.metadata.upload import _put_file_to_s3
+from willisapi_client.services.metadata.upload import (
+    _put_file_to_s3,
+    _put_part_to_s3,
+)
 from willisapi_client.services.metadata.utils import build_retry_session
 from willisapi_client.timer import measure
 from willisapi_client.willisapi_client import WillisapiClient
@@ -26,6 +31,13 @@ ACTIONS = {
 }
 # The API accepts these; u.dcr and rc are in the spec but not live yet.
 SUPPORTED_ACTIONS = ("c", "u", "u.ow")
+
+# A file of PART_SIZE bytes or more is uploaded in parts of that size, all
+# presigned up front and sent in parallel; smaller files use one presigned URL.
+# S3 allows 10,000 parts, so a file over PART_SIZE * 10,000 gets larger parts.
+PART_SIZE = 50 * 1024**2
+MAX_PARTS = 10_000
+DEFAULT_WORKERS = 8
 
 NOTE_EXTENSIONS = (".txt", ".pdf", ".jpeg", ".jpg", ".png")
 RECORDING_EXTENSIONS = (".wav", ".mp3", ".mp4", ".mov")
@@ -61,6 +73,13 @@ def _failed(message, errors=None):
         "records": [],
         "errors": errors or [],
     }
+
+
+def _public(summary: dict) -> dict:
+    """The summary as the caller sees it: the per-file detail is the API's and the
+    client's business, and what it means for each record is in ``records``."""
+    summary.pop("attachments", None)
+    return summary
 
 
 class COAUploadUtils:
@@ -140,6 +159,21 @@ class COAUploadUtils:
                         found.append((oid, item.get("Value")))
         return found
 
+    def attachment_paths_by_record(self) -> dict:
+        """``{(record position, ItemOID): path}``, the way the API numbers its records.
+
+        Matching an issued file back to its path by checksum would confuse two
+        files with the same content; the API names each by record and ItemOID.
+        """
+        found = {}
+        for position, (_, _, form) in enumerate(self.records()):
+            for group in (form or {}).get("ItemGroupData") or []:
+                if group.get("ItemGroupOID") != "IG.ATTACHMENTS":
+                    continue
+                for item in group.get("ItemData") or []:
+                    found[(position, str(item.get("ItemOID", "")))] = item.get("Value")
+        return found
+
     @staticmethod
     def check_attachment(oid: str, path) -> str:
         """An error message when the file can't be uploaded, else ''."""
@@ -153,6 +187,32 @@ class COAUploadUtils:
         if not os.path.isfile(path):
             return f"{oid}: file not found: {path}"
         return ""
+
+    @staticmethod
+    def calculate_part_checksums(file_path: str, part_size: int) -> list:
+        """Base64 SHA-256 of each ``part_size`` slice of the file, read in 1 MiB steps."""
+        digests = []
+        with open(file_path, "rb") as f:
+            while True:
+                digest, left = hashlib.sha256(), part_size
+                while left:
+                    chunk = f.read(min(left, 1024 * 1024))
+                    if not chunk:
+                        break
+                    digest.update(chunk)
+                    left -= len(chunk)
+                if left == part_size:
+                    break
+                digests.append(digest.digest())
+        return [base64.b64encode(d).decode("utf-8") for d in digests]
+
+    @staticmethod
+    def composite_checksum(part_checksums: list) -> str:
+        """What S3 reports for the assembled file: SHA-256 of the part digests, plus ``-<parts>``."""
+        raw = b"".join(base64.b64decode(c) for c in part_checksums)
+        return base64.b64encode(hashlib.sha256(raw).digest()).decode() + (
+            f"-{len(part_checksums)}"
+        )
 
     @staticmethod
     def calculate_file_checksum(file_path: str) -> str:
@@ -171,7 +231,10 @@ def coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dic
     ``action``: ``c``/``create`` (new data), ``u``/``update`` (participant
     status, visit dates), ``u.ow``/``update.overwrite`` (replace existing data).
     Returns the API's summary: ``{status, code, message, records: [...]}`` plus
-    ``attachments`` with each file's upload outcome.
+    ``session_id`` (the upload as a whole); each record has its own ``record_id``.
+    A record with files is SUCCESS only once the API has confirmed them in S3; a
+    COA whose files are missing is FAILED and must be sent again with ``u.ow``
+    (not ``c``).
     """
     normalized = ACTIONS.get(str(action).strip().lower())
     if normalized is None or normalized not in SUPPORTED_ACTIONS:
@@ -190,13 +253,23 @@ def coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dic
 
     utils = COAUploadUtils(data)
     errors = utils.validate(normalized)
-    checksums = {}
+    paths = {}
     for oid, path in utils.attachment_paths():
         error = utils.check_attachment(oid, path)
         if error:
             errors.append(error)
-        elif path not in checksums:
-            checksums[path] = utils.calculate_file_checksum(path)
+        else:
+            paths[path] = os.path.getsize(path)
+    # One part size for the call, large enough for the biggest file.
+    part_size = max(PART_SIZE, math.ceil(max(paths.values(), default=0) / MAX_PARTS))
+    checksums, part_checksums = {}, {}
+    if not errors:
+        for path, size in paths.items():
+            if size >= PART_SIZE:
+                part_checksums[path] = utils.calculate_part_checksums(path, part_size)
+                checksums[path] = utils.composite_checksum(part_checksums[path])
+            else:
+                checksums[path] = utils.calculate_file_checksum(path)
     if errors:
         logger.error(f'{datetime.now().strftime("%H:%M:%S")}: json check failed')
         return _failed("The JSON failed validation.", errors)
@@ -222,12 +295,26 @@ def coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dic
         response = build_retry_session().post(
             wc.get_coa_upload_url(),
             headers=headers,
-            json={"action": normalized, "record_id": record_id, "checksums": checksums},
+            json={
+                "action": normalized,
+                "record_id": record_id,
+                "checksums": checksums,
+                **(
+                    {"part_size": part_size, "part_checksums": part_checksums}
+                    if part_checksums
+                    else {}
+                ),
+            },
         )
         summary = response.json()
     except Exception as ex:
         return _failed(f"COA upload request failed: {ex}")
-    if not isinstance(summary, dict) or response.status_code not in (200, 207, 400):
+    if not isinstance(summary, dict) or response.status_code not in (
+        200,
+        202,
+        207,
+        400,
+    ):
         return _failed(
             f"COA upload request failed with status {response.status_code}.",
             [response.text],
@@ -236,35 +323,101 @@ def coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dic
         # A request-level rejection ({"error": ...} or field errors).
         return _failed("COA upload was rejected.", [json.dumps(summary)])
 
-    # Send each file to its presigned URL. They share one short expiry window,
-    # so upload them concurrently.
+    # Send each file to its presigned URL(s). A multipart file's part URLs are
+    # all issued at once; every part and every small file goes through one pool.
     path_by_checksum = {checksum: path for path, checksum in checksums.items()}
-    pending = [
-        (
-            attachment,
-            {
-                "presigned": attachment["presigned"],
-                "checksum": attachment["checksum"],
-                "recording": path_by_checksum[attachment["checksum"]],
-            },
-        )
-        for attachment in summary.get("attachments") or []
-        if attachment.get("presigned")
-        and attachment.get("checksum") in path_by_checksum
-    ]
-    if pending:
-        with ThreadPoolExecutor(
-            max_workers=min(len(pending), os.cpu_count() or 1)
-        ) as executor:
-            outcomes = list(executor.map(_put_file_to_s3, [f for _, f in pending]))
-        for (attachment, file), error in zip(pending, outcomes):
-            attachment["upload_status"] = "Failed" if error else "Success"
-            attachment["error"] = error
-            attachment["file"] = file["recording"]
+    path_by_record = utils.attachment_paths_by_record()
+    uploads = []  # (attachment, [upload, ...])
+    for attachment in summary.get("attachments") or []:
+        path = path_by_record.get(
+            (attachment.get("record"), attachment.get("item_oid"))
+        ) or path_by_checksum.get(attachment.get("checksum"))
+        if path is None:
+            continue
+        attachment["file"] = path
+        if attachment.get("multipart"):
+            parts = attachment["multipart"]["parts"]
+            digests = part_checksums[path]
+            size = os.path.getsize(path)
+            step = attachment["multipart"]["part_size"]
+            stop = threading.Event()  # set by the first part that fails
+            uploads.append(
+                (
+                    attachment,
+                    [
+                        (
+                            _put_part_to_s3,
+                            {
+                                "number": part["number"],
+                                "presigned": part["presigned"],
+                                "checksum": digests[part["number"] - 1],
+                                "recording": path,
+                                "stop": stop,
+                                "offset": (part["number"] - 1) * step,
+                                "length": min(step, size - (part["number"] - 1) * step),
+                            },
+                        )
+                        for part in parts
+                    ],
+                )
+            )
+        elif attachment.get("presigned"):
+            uploads.append(
+                (
+                    attachment,
+                    [
+                        (
+                            _put_file_to_s3,
+                            {
+                                "presigned": attachment["presigned"],
+                                "checksum": attachment["checksum"],
+                                "recording": path,
+                            },
+                        )
+                    ],
+                )
+            )
+    if uploads:
+        tasks = [task for _, group in uploads for task in group]
+        workers = min(len(tasks), kwargs.get("workers") or DEFAULT_WORKERS)
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            outcomes = list(executor.map(lambda t: t[0](t[1]), tasks))
+        position = 0
+        failed = 0
+        for attachment, group in uploads:
+            errors_found = [e for e in outcomes[position : position + len(group)] if e]
+            # The part that failed, not the ones skipped because of it, first.
+            errors_found.sort(key=lambda e: "skipped" in e)
+            position += len(group)
+            attachment["upload_status"] = "Failed" if errors_found else "Success"
+            attachment["error"] = "; ".join(errors_found[:3]) or None
             attachment.pop("presigned", None)
-        failed = [e for e in outcomes if e]
+            attachment.pop("multipart", None)
+            failed += bool(errors_found)
         if failed:
+            logger.error(f"{failed} file(s) failed to upload")
+            for attachment, _ in uploads:
+                if attachment.get("error"):
+                    logger.error(f"{attachment['file']}: {attachment['error']}")
+
+    if any(r.get("status") == "PENDING" for r in summary["records"]):
+        # A record is SUCCESS only once its files are confirmed in S3. Ask the
+        # API to check them, including after a failed PUT, so it marks the COA
+        # incomplete (to be sent again with u.ow) instead of leaving it pending.
+        try:
+            confirmed = build_retry_session().patch(
+                wc.get_coa_upload_confirm_url(record_id), headers=headers
+            )
+            result = confirmed.json()
+        except Exception as ex:
+            summary["message"] = f"Could not confirm the uploaded files: {ex}"
+            return _public(summary)
+        if confirmed.status_code not in (200, 207, 400) or "records" not in result:
             summary["message"] = (
-                f"{summary.get('message', '')} {len(failed)} file(s) failed to upload."
-            ).strip()
-    return summary
+                f"Could not confirm the uploaded files (status {confirmed.status_code})."
+            )
+            summary["errors"] = [confirmed.text]
+            return _public(summary)
+        for key in ("status", "code", "message", "records"):
+            summary[key] = result[key]
+    return _public(summary)
