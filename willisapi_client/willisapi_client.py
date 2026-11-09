@@ -43,6 +43,9 @@ class WillisapiClient:
     def get_coa_upload_url(self):
         return self.get_base_v2_url() + "metadata/coa-upload"
 
+    def get_coa_upload_confirm_url(self, record_id):
+        return self.get_coa_upload_url() + f"/{record_id}"
+
     def get_csv_archive_url(self):
         return self.get_base_v2_url() + "metadata/csv-archive"
 

@@ -37,6 +37,86 @@ from willisapi_client.services.metadata.archive import (
 VALID_SCORE_TYPES = ["rater", "reviewer"]
 
 
+class _FileSlice:
+    """A read-only view of ``length`` bytes of a file from ``offset``.
+
+    ``requests`` streams it with a Content-Length instead of reading the whole
+    part into memory, and can rewind it when a retry resends the body.
+    """
+
+    def __init__(self, path: str, offset: int, length: int):
+        self._file = open(path, "rb")
+        self._offset = offset
+        self._length = length
+        self._position = 0
+        self._file.seek(offset)
+
+    def __len__(self):
+        return self._length
+
+    def read(self, size: int = -1) -> bytes:
+        left = self._length - self._position
+        size = left if size is None or size < 0 else min(size, left)
+        data = self._file.read(size)
+        self._position += len(data)
+        return data
+
+    def tell(self) -> int:
+        return self._position
+
+    def seek(self, position: int, whence: int = 0) -> int:
+        if whence == 1:
+            position += self._position
+        elif whence == 2:
+            position += self._length
+        self._position = max(0, min(position, self._length))
+        self._file.seek(self._offset + self._position)
+        return self._position
+
+    def close(self):
+        self._file.close()
+
+
+def _put_part_to_s3(part: dict):
+    """Upload one part of a multipart upload to its presigned URL.
+
+    ``part`` has ``presigned``, ``checksum`` (the part's SHA-256), ``recording``
+    (the file's path), ``offset`` and ``length``. The part's checksum is signed
+    into the URL, so the headers must carry the same value. ``stop`` is an event
+    shared by the file's parts: once one part fails it is set, and the rest are
+    skipped, as the API will abort the whole upload anyway. Returns an error
+    string if the upload fails, otherwise None.
+    """
+    stop = part.get("stop")
+    if stop is not None and stop.is_set():
+        return f"part {part['number']} of {part['recording']}: skipped, an earlier part failed"
+    body = _FileSlice(part["recording"], part["offset"], part["length"])
+    try:
+        response = build_retry_session().put(
+            part["presigned"],
+            data=body,
+            headers={
+                "x-amz-checksum-sha256": part["checksum"],
+                "x-amz-sdk-checksum-algorithm": "SHA256",
+            },
+            timeout=(10, 300),
+        )
+        if response.status_code != 200:
+            if stop is not None:
+                stop.set()
+            return (
+                f"S3 upload failed with status code {response.status_code} "
+                f"for part {part['number']} of {part['recording']}: {response.text}"
+            )
+    except Exception as ex:
+        if stop is not None:
+            stop.set()
+        return f"part {part['number']} of {part['recording']}: {ex}"
+    finally:
+        body.close()
+    return None
+
+
 def _put_file_to_s3(file_presigned: dict):
     """Upload a single file to its presigned S3 URL.
 
