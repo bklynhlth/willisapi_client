@@ -19,7 +19,7 @@ _MIME_TYPES = mimetypes.MimeTypes()
 _MIME_TYPES.add_type("application/vnd.apache.parquet", ".parquet")
 
 from willisapi_client.timer import measure
-from willisapi_client.willisapi_client import WillisapiClient
+from willisapi_client.willisapi_client import WillisapiClient, authorization_header
 from willisapi_client.logging_setup import logger as logger
 from willisapi_client.services.metadata.utils import (
     MetadataValidation,
@@ -182,7 +182,7 @@ def upload(api_key: str, csv_path: str, **kwargs):
         wc = WillisapiClient(env=kwargs.get("env"))
         url = wc.get_upload_url()
         headers = wc.get_headers()
-        headers["Authorization"] = f"token {api_key}"
+        headers["Authorization"] = authorization_header(api_key)
         logger.info(f'{datetime.now().strftime("%H:%M:%S")}: beginning upload')
 
         # Archive the source metadata CSV and open a tracking record.
@@ -299,7 +299,7 @@ def processed_upload(api_key: str, csv_path: str, output_path: str, **kwargs):
         wc = WillisapiClient(env=kwargs.get("env"))
         url = wc.get_processed_upload_url()
         headers = wc.get_headers()
-        headers["Authorization"] = f"token {api_key}"
+        headers["Authorization"] = authorization_header(api_key)
         logger.info(f'{datetime.now().strftime("%H:%M:%S")}: beginning upload')
 
         # Archive the source processed-data metadata CSV and open a tracking record.

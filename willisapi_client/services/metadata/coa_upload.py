@@ -15,7 +15,7 @@ from willisapi_client.services.metadata.upload import (
 )
 from willisapi_client.services.metadata.utils import build_retry_session
 from willisapi_client.timer import measure
-from willisapi_client.willisapi_client import WillisapiClient
+from willisapi_client.willisapi_client import WillisapiClient, authorization_header
 
 ACTIONS = {
     "c": "c",
@@ -290,7 +290,7 @@ def coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dic
 
     wc = WillisapiClient(env=env)
     headers = wc.get_headers()
-    headers["Authorization"] = f"token {api_key}"
+    headers["Authorization"] = authorization_header(api_key)
     try:
         response = build_retry_session().post(
             wc.get_coa_upload_url(),

@@ -1,7 +1,7 @@
 import os
 import requests
 
-from willisapi_client.willisapi_client import WillisapiClient
+from willisapi_client.willisapi_client import WillisapiClient, authorization_header
 from willisapi_client.logging_setup import logger as logger
 
 
@@ -9,7 +9,7 @@ def _archive_headers(api_key):
     return {
         "Content-Type": "application/json",
         "Accept": "application/json",
-        "Authorization": f"token {api_key}",
+        "Authorization": authorization_header(api_key),
     }
 
 
