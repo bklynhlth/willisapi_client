@@ -2,6 +2,19 @@ import setuptools
 import math
 
 
+def authorization_header(key: str) -> str:
+    """The ``Authorization`` value for ``key``.
+
+    An API key is a JWT (three dot-separated parts, starting ``eyJ``) and is sent
+    as ``ApiKey <key>``; anything else is a personal access token, sent as
+    ``token <key>``.
+    """
+    parts = key.split(".")
+    if len(parts) == 3 and key.startswith("eyJ"):
+        return f"ApiKey {key}"
+    return f"token {key}"
+
+
 def get_client_version():
     try:
         cv = float(setuptools.version.metadata.version("willisapi_client"))
@@ -51,6 +64,9 @@ class WillisapiClient:
 
     def get_csv_archive_finalize_url(self, record_id):
         return self.get_csv_archive_url() + f"/{record_id}"
+
+    def get_api_key_refresh_url(self):
+        return self.get_base_v2_url() + "auth/api-keys/refresh"
 
     def get_headers(self):
         return {"Content-Type": "application/json", "Accept": "application/json"}

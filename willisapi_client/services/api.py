@@ -10,3 +10,4 @@ from willisapi_client.services.metadata import (
     processed_upload,
     coa_upload,
 )
+from willisapi_client.services.auth import refresh_api_key
