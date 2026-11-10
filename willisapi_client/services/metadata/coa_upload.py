@@ -64,15 +64,39 @@ REQUIRED_BY_ACTION = {
 }
 
 
-def _failed(message, errors=None):
-    """A summary in the API's response shape, for failures before/around the call."""
+ERROR_MESSAGES = {
+    "400": "Invalid request. Please check the request payload.",
+    "500": "Internal server error.",
+    "503": "The service is temporarily unavailable. Please try again later.",
+}
+
+
+def _failed(errors=None, code="400"):
+    """A summary in the API's error shape, for failures before/around the call.
+
+    The message is the standard one for ``code``; ``errors`` says what happened.
+    """
     return {
         "status": "FAILED",
-        "code": "400",
-        "message": message,
+        "code": code,
+        "message": ERROR_MESSAGES[code],
         "records": [],
-        "errors": errors or [],
+        "errors": [errors] if isinstance(errors, str) else errors or [],
     }
+
+
+def _api_error(response):
+    """The API's own ``{status, code, message, errors}`` body, else a 500 summary."""
+    try:
+        body = response.json()
+    except ValueError:
+        body = None
+    if isinstance(body, dict) and {"status", "code", "message"} <= set(body):
+        body.setdefault("records", [])
+        return body
+    return _failed(
+        f"Unexpected response (HTTP {response.status_code}): {response.text}", "500"
+    )
 
 
 def _public(summary: dict) -> dict:
@@ -272,7 +296,7 @@ def coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dic
                 checksums[path] = utils.calculate_file_checksum(path)
     if errors:
         logger.error(f'{datetime.now().strftime("%H:%M:%S")}: json check failed')
-        return _failed("The JSON failed validation.", errors)
+        return _failed(errors)
     logger.info(f'{datetime.now().strftime("%H:%M:%S")}: json check passed')
 
     env = kwargs.get("env")
@@ -286,7 +310,7 @@ def coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dic
         content_type="application/json",
     )
     if not record_id:
-        return _failed("Could not upload the JSON to Willis.")
+        return _failed("Could not upload the JSON to Willis.", "503")
 
     wc = WillisapiClient(env=env)
     headers = wc.get_headers()
@@ -308,20 +332,10 @@ def coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dic
         )
         summary = response.json()
     except Exception as ex:
-        return _failed(f"COA upload request failed: {ex}")
-    if not isinstance(summary, dict) or response.status_code not in (
-        200,
-        202,
-        207,
-        400,
-    ):
-        return _failed(
-            f"COA upload request failed with status {response.status_code}.",
-            [response.text],
-        )
-    if "records" not in summary:
-        # A request-level rejection ({"error": ...} or field errors).
-        return _failed("COA upload was rejected.", [json.dumps(summary)])
+        return _failed(f"COA upload request failed: {ex}", "503")
+    if response.status_code not in (200, 202) or "records" not in summary:
+        # The API refused the call as a whole (400/401/403/404/500/503).
+        return _api_error(response)
 
     # Send each file to its presigned URL(s). A multipart file's part URLs are
     # all issued at once; every part and every small file goes through one pool.
@@ -410,14 +424,9 @@ def coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dic
             )
             result = confirmed.json()
         except Exception as ex:
-            summary["message"] = f"Could not confirm the uploaded files: {ex}"
-            return _public(summary)
-        if confirmed.status_code not in (200, 207, 400) or "records" not in result:
-            summary["message"] = (
-                f"Could not confirm the uploaded files (status {confirmed.status_code})."
-            )
-            summary["errors"] = [confirmed.text]
-            return _public(summary)
+            return _failed(f"Could not confirm the uploaded files: {ex}", "503")
+        if confirmed.status_code != 200 or "records" not in result:
+            return _api_error(confirmed)
         for key in ("status", "code", "message", "records"):
             summary[key] = result[key]
     return _public(summary)
