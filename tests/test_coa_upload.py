@@ -74,7 +74,9 @@ class TestCOAUpload:
     def test_unsupported_action(self, tmp_path):
         res = coa_upload("key", write(tmp_path, odm()), action="rc")
         assert res["status"] == "FAILED"
-        assert "Unsupported action" in res["message"]
+        assert res["code"] == "400"
+        assert res["message"] == "Invalid request. Please check the request payload."
+        assert "Unsupported action" in res["errors"][0]
 
     def test_unreadable_json(self, tmp_path):
         res = coa_upload("key", str(tmp_path / "missing.json"))
@@ -150,11 +152,29 @@ class TestCOAUpload:
     @patch.object(MODULE, "archive_metadata_csv", return_value="rec-1")
     def test_request_level_rejection_is_reported(self, archive, session, tmp_path):
         response = MagicMock(status_code=400)
-        response.json.return_value = {"record_id": ["Upload record not found."]}
+        response.json.return_value = {
+            "status": "FAILED",
+            "code": "400",
+            "message": "Invalid request. Please check the request payload.",
+            "errors": ["record_id: Upload record not found."],
+        }
         session.return_value.post.return_value = response
         res = coa_upload("key", write(tmp_path, odm()))
         assert res["status"] == "FAILED"
+        assert res["code"] == "400"
         assert "Upload record not found" in res["errors"][0]
+
+    @patch.object(MODULE, "build_retry_session")
+    @patch.object(MODULE, "archive_metadata_csv", return_value="rec-1")
+    def test_a_response_that_is_not_json_is_a_503(self, archive, session, tmp_path):
+        response = MagicMock(status_code=502, text="<html>bad gateway</html>")
+        response.json.side_effect = ValueError
+        session.return_value.post.return_value = response
+        res = coa_upload("key", write(tmp_path, odm()))
+        assert res["code"] == "503"
+        assert res["message"] == (
+            "The service is temporarily unavailable. Please try again later."
+        )
 
 
 class TestConfirmation:
@@ -205,11 +225,11 @@ class TestConfirmation:
     ):
         recording = tmp_path / "a.mp4"
         recording.write_bytes(b"audio")
-        confirmed = MagicMock(status_code=400)
+        confirmed = MagicMock(status_code=200)
         confirmed.json.return_value = {
             "status": "FAILED",
-            "code": "400",
-            "message": "Upload failed.",
+            "code": "200",
+            "message": "Data upload failed.",
             "records": [{"status": "FAILED", "errors": ["file was not uploaded"]}],
         }
         self._pending(session, recording, confirmed)
@@ -346,10 +366,10 @@ class TestMultipart:
             return post
 
         session.return_value.post.side_effect = issue
-        confirmed = MagicMock(status_code=400)
+        confirmed = MagicMock(status_code=200)
         confirmed.json.return_value = {
             "status": "FAILED",
-            "code": "400",
+            "code": "200",
             "message": "x",
             "records": [{"status": "FAILED"}],
         }
