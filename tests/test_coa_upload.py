@@ -225,10 +225,10 @@ class TestConfirmation:
     ):
         recording = tmp_path / "a.mp4"
         recording.write_bytes(b"audio")
-        confirmed = MagicMock(status_code=200)
+        confirmed = MagicMock(status_code=400)
         confirmed.json.return_value = {
             "status": "FAILED",
-            "code": "200",
+            "code": "400",
             "message": "Data upload failed.",
             "records": [{"status": "FAILED", "errors": ["file was not uploaded"]}],
         }
@@ -239,6 +239,8 @@ class TestConfirmation:
 
         session.return_value.patch.assert_called_once()
         assert res["status"] == "FAILED"
+        assert res["code"] == "400"
+        assert res["records"][0]["errors"] == ["file was not uploaded"]
         assert "attachments" not in res
 
 
@@ -366,10 +368,10 @@ class TestMultipart:
             return post
 
         session.return_value.post.side_effect = issue
-        confirmed = MagicMock(status_code=200)
+        confirmed = MagicMock(status_code=400)
         confirmed.json.return_value = {
             "status": "FAILED",
-            "code": "200",
+            "code": "400",
             "message": "x",
             "records": [{"status": "FAILED"}],
         }

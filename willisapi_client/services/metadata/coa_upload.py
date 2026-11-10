@@ -333,8 +333,9 @@ def coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dic
         summary = response.json()
     except Exception as ex:
         return _failed(f"COA upload request failed: {ex}", "503")
-    if response.status_code not in (200, 202) or "records" not in summary:
-        # The API refused the call as a whole (400/401/403/404/500/503).
+    if response.status_code not in (200, 202, 400) or "records" not in summary:
+        # The API refused the call as a whole (400/401/403/404/500/503); an
+        # all-records-failed 400 carries ``records`` and is handled below.
         return _api_error(response)
 
     # Send each file to its presigned URL(s). A multipart file's part URLs are
@@ -425,7 +426,7 @@ def coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dic
             result = confirmed.json()
         except Exception as ex:
             return _failed(f"Could not confirm the uploaded files: {ex}", "503")
-        if confirmed.status_code != 200 or "records" not in result:
+        if confirmed.status_code not in (200, 400) or "records" not in result:
             return _api_error(confirmed)
         for key in ("status", "code", "message", "records"):
             summary[key] = result[key]
