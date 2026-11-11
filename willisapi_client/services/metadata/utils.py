@@ -35,7 +35,7 @@ def build_retry_session(total: int = 3, backoff_factor: float = 1) -> requests.S
         status=total,
         backoff_factor=backoff_factor,
         status_forcelist=[502, 503, 504],
-        allowed_methods=["PUT", "POST"],
+        allowed_methods=["PUT", "POST", "PATCH"],
         raise_on_status=False,
     )
     # Increased pool size to accommodate concurrent ThreadPoolExecutor uploads

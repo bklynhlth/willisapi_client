@@ -1,7 +1,7 @@
 import os
 import requests
 
-from willisapi_client.willisapi_client import WillisapiClient
+from willisapi_client.willisapi_client import WillisapiClient, authorization_header
 from willisapi_client.logging_setup import logger as logger
 
 
@@ -9,11 +9,19 @@ def _archive_headers(api_key):
     return {
         "Content-Type": "application/json",
         "Accept": "application/json",
-        "Authorization": f"token {api_key}",
+        "Authorization": authorization_header(api_key),
     }
 
 
-def archive_metadata_csv(api_key, csv_path, total_rows, upload_type, env=None):
+def archive_metadata_csv(
+    api_key,
+    csv_path,
+    total_rows,
+    upload_type,
+    env=None,
+    content_type="text/csv",
+    failure=None,
+):
     """Archive the source metadata CSV alongside the data upload.
 
     Creates a server-side tracking row, then PUTs the raw CSV to the returned
@@ -21,7 +29,9 @@ def archive_metadata_csv(api_key, csv_path, total_rows, upload_type, env=None):
     caller can finalize it with row counts), or ``None`` on failure.
 
     All failures are logged and swallowed — archiving must never abort the
-    actual data upload.
+    actual data upload. A caller that wants to know why can pass a ``failure``
+    dict, which gets the API's ``status_code`` and body ``text`` when it refuses
+    the request.
     """
     try:
         wc = WillisapiClient(env=env)
@@ -35,6 +45,9 @@ def archive_metadata_csv(api_key, csv_path, total_rows, upload_type, env=None):
         )
         if res.status_code != 201:
             logger.warning(f"CSV archive init failed: {res.status_code} {res.text}")
+            if failure is not None:
+                failure["status_code"] = res.status_code
+                failure["text"] = res.text
             return None
 
         body = res.json()
@@ -46,7 +59,7 @@ def archive_metadata_csv(api_key, csv_path, total_rows, upload_type, env=None):
 
         with open(csv_path, "rb") as f:
             put_res = requests.put(
-                presigned, data=f, headers={"Content-Type": "text/csv"}
+                presigned, data=f, headers={"Content-Type": content_type}
             )
         if put_res.status_code not in (200, 204):
             logger.warning(f"CSV archive S3 upload failed: {put_res.status_code}")
