@@ -30,7 +30,8 @@ def archive_metadata_csv(
 
     All failures are logged and swallowed — archiving must never abort the
     actual data upload. A caller that wants to know why can pass a ``failure``
-    dict, which gets the API's ``status_code`` when it refuses the request.
+    dict, which gets the API's ``status_code`` and body ``text`` when it refuses
+    the request.
     """
     try:
         wc = WillisapiClient(env=env)
@@ -46,6 +47,7 @@ def archive_metadata_csv(
             logger.warning(f"CSV archive init failed: {res.status_code} {res.text}")
             if failure is not None:
                 failure["status_code"] = res.status_code
+                failure["text"] = res.text
             return None
 
         body = res.json()

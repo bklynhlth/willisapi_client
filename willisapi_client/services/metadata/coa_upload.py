@@ -67,12 +67,16 @@ REQUIRED_BY_ACTION = {
 ERROR_MESSAGES = {
     "400": "Invalid request. Please check the request payload.",
     "401": "Invalid or missing access token.",
+    "403": "You do not have permission to perform this operation.",
     "500": "Internal server error.",
     "503": "The service is temporarily unavailable. Please try again later.",
 }
 
 
-def _failed(errors=None, code="400"):
+TOKEN_EXPIRED_MESSAGE = "Access token has expired."
+
+
+def _failed(errors=None, code="400", message=None):
     """A summary in the API's error shape, for failures before/around the call.
 
     The message is the standard one for ``code``; ``errors`` says what happened.
@@ -80,7 +84,7 @@ def _failed(errors=None, code="400"):
     return {
         "status": "FAILED",
         "code": code,
-        "message": ERROR_MESSAGES[code],
+        "message": message or ERROR_MESSAGES[code],
         "records": [],
         "errors": [errors] if isinstance(errors, str) else errors or [],
     }
@@ -313,11 +317,18 @@ def coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dic
         failure=failure,
     )
     if not record_id:
-        if failure.get("status_code") in (401, 403):
+        # The archive endpoint answers a rejected token with 403 and an
+        # AuthenticationFailed body, and a missing permission with a plain 403.
+        text = failure.get("text") or ""
+        if failure.get("status_code") == 401 or "AuthenticationFailed" in text:
+            expired = "expired" in text.lower()
             return _failed(
-                "The API key was rejected; check it is valid for this environment.",
+                "The access token was rejected.",
                 "401",
+                TOKEN_EXPIRED_MESSAGE if expired else None,
             )
+        if failure.get("status_code") == 403:
+            return _failed("Not allowed to upload to Willis.", "403")
         return _failed("Could not upload the JSON to Willis.", "503")
 
     wc = WillisapiClient(env=env)

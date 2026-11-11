@@ -1,5 +1,6 @@
 import json
 import sys
+import pytest
 from unittest.mock import MagicMock, patch
 
 from willisapi_client.services.metadata.coa_upload import COAUploadUtils, coa_upload
@@ -108,15 +109,38 @@ class TestCOAUpload:
         assert any("file not found" in e for e in res["errors"])
         archive.assert_not_called()
 
-    def test_a_rejected_key_is_reported_as_401_not_503(self, tmp_path):
+    @pytest.mark.parametrize(
+        "status_code, text, code, message",
+        [
+            (
+                403,
+                '{"errors":[{"message":"Invalid token."}],"error_type":"AuthenticationFailed"}',
+                "401",
+                "Invalid or missing access token.",
+            ),
+            (
+                401,
+                '{"errors":[{"message":"Token has expired."}],"error_type":"AuthenticationFailed"}',
+                "401",
+                "Access token has expired.",
+            ),
+            (
+                403,
+                '{"error":"User does not have permission to archive metadata uploads."}',
+                "403",
+                "You do not have permission to perform this operation.",
+            ),
+        ],
+    )
+    def test_a_refused_archive_is_reported_with_the_standard_code(
+        self, tmp_path, status_code, text, code, message
+    ):
         def refuse(*args, failure=None, **kwargs):
-            failure["status_code"] = 403
+            failure.update(status_code=status_code, text=text)
 
         with patch.object(MODULE, "archive_metadata_csv", side_effect=refuse):
             res = coa_upload("key", write(tmp_path, odm()))
-        assert res["status"] == "FAILED"
-        assert res["code"] == "401"
-        assert res["message"] == "Invalid or missing access token."
+        assert (res["status"], res["code"], res["message"]) == ("FAILED", code, message)
 
     def test_an_archive_failure_without_a_refusal_is_503(self, tmp_path):
         with patch.object(MODULE, "archive_metadata_csv", return_value=None):
