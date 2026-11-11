@@ -14,7 +14,13 @@ def _archive_headers(api_key):
 
 
 def archive_metadata_csv(
-    api_key, csv_path, total_rows, upload_type, env=None, content_type="text/csv"
+    api_key,
+    csv_path,
+    total_rows,
+    upload_type,
+    env=None,
+    content_type="text/csv",
+    failure=None,
 ):
     """Archive the source metadata CSV alongside the data upload.
 
@@ -23,7 +29,9 @@ def archive_metadata_csv(
     caller can finalize it with row counts), or ``None`` on failure.
 
     All failures are logged and swallowed — archiving must never abort the
-    actual data upload.
+    actual data upload. A caller that wants to know why can pass a ``failure``
+    dict, which gets the API's ``status_code`` and body ``text`` when it refuses
+    the request.
     """
     try:
         wc = WillisapiClient(env=env)
@@ -37,6 +45,9 @@ def archive_metadata_csv(
         )
         if res.status_code != 201:
             logger.warning(f"CSV archive init failed: {res.status_code} {res.text}")
+            if failure is not None:
+                failure["status_code"] = res.status_code
+                failure["text"] = res.text
             return None
 
         body = res.json()
