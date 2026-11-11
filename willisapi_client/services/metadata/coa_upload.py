@@ -66,6 +66,7 @@ REQUIRED_BY_ACTION = {
 
 ERROR_MESSAGES = {
     "400": "Invalid request. Please check the request payload.",
+    "401": "Invalid or missing access token.",
     "500": "Internal server error.",
     "503": "The service is temporarily unavailable. Please try again later.",
 }
@@ -301,6 +302,7 @@ def coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dic
 
     env = kwargs.get("env")
     # The JSON goes to S3 first; the API reads it back from there.
+    failure = {}
     record_id = archive_metadata_csv(
         api_key,
         json_path,
@@ -308,8 +310,14 @@ def coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dic
         upload_type="coa_json",
         env=env,
         content_type="application/json",
+        failure=failure,
     )
     if not record_id:
+        if failure.get("status_code") in (401, 403):
+            return _failed(
+                "The API key was rejected; check it is valid for this environment.",
+                "401",
+            )
         return _failed("Could not upload the JSON to Willis.", "503")
 
     wc = WillisapiClient(env=env)

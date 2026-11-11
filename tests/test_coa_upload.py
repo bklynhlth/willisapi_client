@@ -108,6 +108,21 @@ class TestCOAUpload:
         assert any("file not found" in e for e in res["errors"])
         archive.assert_not_called()
 
+    def test_a_rejected_key_is_reported_as_401_not_503(self, tmp_path):
+        def refuse(*args, failure=None, **kwargs):
+            failure["status_code"] = 403
+
+        with patch.object(MODULE, "archive_metadata_csv", side_effect=refuse):
+            res = coa_upload("key", write(tmp_path, odm()))
+        assert res["status"] == "FAILED"
+        assert res["code"] == "401"
+        assert res["message"] == "Invalid or missing access token."
+
+    def test_an_archive_failure_without_a_refusal_is_503(self, tmp_path):
+        with patch.object(MODULE, "archive_metadata_csv", return_value=None):
+            res = coa_upload("key", write(tmp_path, odm()))
+        assert res["code"] == "503"
+
     @patch.object(MODULE, "_put_file_to_s3", return_value=None)
     @patch.object(MODULE, "build_retry_session")
     @patch.object(MODULE, "archive_metadata_csv", return_value="rec-1")
