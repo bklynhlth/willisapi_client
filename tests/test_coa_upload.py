@@ -102,6 +102,29 @@ class TestCOAUpload:
         res = coa_upload("key", write(tmp_path, odm()), action="u")
         assert any("FormData is not allowed" in e for e in res["errors"])
 
+    def test_dcr_update_rejects_attachments(self, tmp_path):
+        data = odm(attachments=[("IT.NOTES_PATH.0", str(tmp_path / "n.txt"))])
+        with patch.object(MODULE, "archive_metadata_csv") as archive:
+            res = coa_upload("key", write(tmp_path, data), action="u.dcr")
+        assert any("IG.ATTACHMENTS is not allowed" in e for e in res["errors"])
+        archive.assert_not_called()
+
+    def test_dcr_update_needs_items_and_a_form(self, tmp_path):
+        data = odm()
+        form = data["ClinicalData"][0]["SubjectData"][0]["StudyEventData"][0][
+            "FormData"
+        ][0]
+        form["ItemGroupData"] = []
+        res = coa_upload("key", write(tmp_path, data), action="update.dcr")
+        assert any("ItemGroupData is required" in e for e in res["errors"])
+        res = coa_upload("key", write(tmp_path, odm(form=False)), action="u.dcr")
+        assert any("FormOID is required" in e for e in res["errors"])
+
+    def test_dcr_update_is_sent_to_the_api(self, tmp_path):
+        with patch.object(MODULE, "archive_metadata_csv", return_value=None) as archive:
+            coa_upload("key", write(tmp_path, odm()), action="u.dcr")
+        archive.assert_called_once()
+
     def test_missing_attachment_file_fails_before_any_request(self, tmp_path):
         data = odm(attachments=[("IT.RECORDING_PATH.0", str(tmp_path / "a.mp4"))])
         with patch.object(MODULE, "archive_metadata_csv") as archive:
