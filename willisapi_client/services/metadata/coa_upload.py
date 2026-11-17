@@ -29,8 +29,8 @@ ACTIONS = {
     "rc": "rc",
     "reconcile": "rc",
 }
-# The API accepts these; u.dcr and rc are in the spec but not live yet.
-SUPPORTED_ACTIONS = ("c", "u", "u.ow")
+# The API accepts these; rc is in the spec but not live yet.
+SUPPORTED_ACTIONS = ("c", "u", "u.ow", "u.dcr")
 
 # A file of PART_SIZE bytes or more is uploaded in parts of that size, all
 # presigned up front and sent in parallel; smaller files use one presigned URL.
@@ -61,6 +61,8 @@ REQUIRED_BY_ACTION = {
     ),
     "u": (),
     "u.ow": ("StudyEventOID",),
+    # Scores only: the form and its items are what the DCR changes.
+    "u.dcr": ("StudyEventOID", "FormOID", "ItemGroupData"),
 }
 
 
@@ -173,6 +175,25 @@ class COAUploadUtils:
                     errors.append(f"{label}: {path} is required for action '{action}'.")
             if action == "u" and form is not None:
                 errors.append(f"{label}: FormData is not allowed for action 'u'.")
+            if action == "u.dcr" and form is not None:
+                # Every group counts: a later duplicate OID must not hide one.
+                groups = form.get("ItemGroupData") or []
+                if any(
+                    g.get("ItemGroupOID") == "IG.ATTACHMENTS" and g.get("ItemData")
+                    for g in groups
+                ):
+                    errors.append(
+                        f"{label}: IG.ATTACHMENTS is not allowed for action 'u.dcr' "
+                        "(it changes scores only)."
+                    )
+                if not any(
+                    g.get("ItemGroupOID") == "IG.ITEMS" and g.get("ItemData")
+                    for g in groups
+                ):
+                    errors.append(
+                        f"{label}: IG.ITEMS must carry the scores to change for "
+                        "action 'u.dcr'."
+                    )
         return errors
 
     def attachment_paths(self) -> list:
@@ -258,7 +279,9 @@ def coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dic
     """Upload COA data (ODM JSON) and its notes/recordings to Willis.
 
     ``action``: ``c``/``create`` (new data), ``u``/``update`` (participant
-    status, visit dates), ``u.ow``/``update.overwrite`` (replace existing data).
+    status, visit dates), ``u.ow``/``update.overwrite`` (replace existing data),
+    ``u.dcr``/``update.dcr`` (change the scores of an existing COA through an
+    executed data change request; send only the items that change).
     Returns the API's summary: ``{status, code, message, records: [...]}`` plus
     ``session_id`` (the upload as a whole); each record has its own ``record_id``.
     A record with files is SUCCESS only once the API has confirmed them in S3; a
@@ -269,7 +292,7 @@ def coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dic
     if normalized is None or normalized not in SUPPORTED_ACTIONS:
         return _failed(
             f"Unsupported action '{action}'. Supported: c/create, u/update, "
-            "u.ow/update.overwrite."
+            "u.ow/update.overwrite, u.dcr/update.dcr."
         )
 
     try:
