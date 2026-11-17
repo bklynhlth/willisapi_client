@@ -109,6 +109,19 @@ class TestCOAUpload:
         assert any("IG.ATTACHMENTS is not allowed" in e for e in res["errors"])
         archive.assert_not_called()
 
+    def test_dcr_update_rejects_attachments_hidden_by_a_duplicate_group(self, tmp_path):
+        note = tmp_path / "n.txt"
+        note.write_text("x")
+        data = odm(attachments=[("IT.NOTES_PATH.0", str(note))])
+        form = data["ClinicalData"][0]["SubjectData"][0]["StudyEventData"][0][
+            "FormData"
+        ][0]
+        form["ItemGroupData"].append({"ItemGroupOID": "IG.ATTACHMENTS", "ItemData": []})
+        with patch.object(MODULE, "archive_metadata_csv") as archive:
+            res = coa_upload("key", write(tmp_path, data), action="u.dcr")
+        assert any("IG.ATTACHMENTS is not allowed" in e for e in res["errors"])
+        archive.assert_not_called()
+
     def test_dcr_update_needs_items_and_a_form(self, tmp_path):
         data = odm()
         form = data["ClinicalData"][0]["SubjectData"][0]["StudyEventData"][0][

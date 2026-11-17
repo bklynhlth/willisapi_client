@@ -176,15 +176,20 @@ class COAUploadUtils:
             if action == "u" and form is not None:
                 errors.append(f"{label}: FormData is not allowed for action 'u'.")
             if action == "u.dcr" and form is not None:
-                groups = {
-                    g.get("ItemGroupOID"): g for g in form.get("ItemGroupData") or []
-                }
-                if (groups.get("IG.ATTACHMENTS") or {}).get("ItemData"):
+                # Every group counts: a later duplicate OID must not hide one.
+                groups = form.get("ItemGroupData") or []
+                if any(
+                    g.get("ItemGroupOID") == "IG.ATTACHMENTS" and g.get("ItemData")
+                    for g in groups
+                ):
                     errors.append(
                         f"{label}: IG.ATTACHMENTS is not allowed for action 'u.dcr' "
                         "(it changes scores only)."
                     )
-                if not (groups.get("IG.ITEMS") or {}).get("ItemData"):
+                if not any(
+                    g.get("ItemGroupOID") == "IG.ITEMS" and g.get("ItemData")
+                    for g in groups
+                ):
                     errors.append(
                         f"{label}: IG.ITEMS must carry the scores to change for "
                         "action 'u.dcr'."
