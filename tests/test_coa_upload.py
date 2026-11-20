@@ -73,11 +73,49 @@ def write(tmp_path, data):
 
 class TestCOAUpload:
     def test_unsupported_action(self, tmp_path):
-        res = coa_upload("key", write(tmp_path, odm()), action="rc")
+        res = coa_upload("key", write(tmp_path, odm()), action="zz")
         assert res["status"] == "FAILED"
         assert res["code"] == "400"
         assert res["message"] == "Invalid request. Please check the request payload."
         assert "Unsupported action" in res["errors"][0]
+        assert "rc/reconcile" in res["errors"][0]
+
+    def test_reconcile_needs_only_the_subject_and_site(self, tmp_path):
+        data = odm(form=False)
+        data["ClinicalData"][0]["SubjectData"][0].pop("StudyEventData")
+        assert COAUploadUtils(data).validate("rc") == []
+        data["ClinicalData"][0]["SubjectData"][0].pop("SubjectKey")
+        errors = COAUploadUtils(data).validate("rc")
+        assert errors == ["SubjectKey None: SubjectKey is required for action 'rc'."]
+
+    @patch.object(MODULE, "build_retry_session")
+    @patch.object(MODULE, "archive_metadata_csv", return_value="rec-1")
+    def test_reconcile_sends_the_action_and_reports_each_difference(
+        self, archive, session, tmp_path
+    ):
+        response = MagicMock(status_code=400)
+        response.json.return_value = {
+            "status": "FAILED",
+            "code": "400",
+            "message": "Data upload failed.",
+            "records": [
+                {
+                    "status": "FAILED",
+                    "code": "409",
+                    "message": "The record exists but does not match.",
+                    "errors": ["Item i02: Medidata 0, Willis 2"],
+                }
+            ],
+            "attachments": [],
+        }
+        session.return_value.post.return_value = response
+
+        res = coa_upload("key", write(tmp_path, odm()), action="reconcile")
+
+        assert session.return_value.post.call_args.kwargs["json"]["action"] == "rc"
+        assert res["records"][0]["code"] == "409"
+        assert res["records"][0]["errors"] == ["Item i02: Medidata 0, Willis 2"]
+        assert "attachments" not in res
 
     def test_unreadable_json(self, tmp_path):
         res = coa_upload("key", str(tmp_path / "missing.json"))
