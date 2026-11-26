@@ -7,7 +7,7 @@ from willisapi_client.services.api import (
     upload,
     processed_upload,
     coa_upload,
-    COAUploadError,
+    WillisException,
     refresh_api_key,
 )
 
@@ -17,6 +17,6 @@ __all__ = [
     "upload",
     "processed_upload",
     "coa_upload",
-    "COAUploadError",
+    "WillisException",
     "refresh_api_key",
 ]

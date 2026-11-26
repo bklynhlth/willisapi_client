@@ -4,9 +4,10 @@ import base64
 import json
 import time
 
+import pytest
 import requests
 
-from willisapi_client import refresh_api_key
+from willisapi_client import WillisException, refresh_api_key
 from willisapi_client.willisapi_client import authorization_header
 
 API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJ0eXAiOiJhcGlfa2V5In0.c2lnbmF0dXJl"
@@ -77,7 +78,7 @@ def test_refresh_reports_a_rejected_token(post):
         401, {"errors": [{"message": "Invalid or expired refresh token."}]}
     )
 
-    assert refresh_api_key("bad") == {
+    assert refresh_api_key("bad", raise_error=False) == {
         "status": "FAILED",
         "code": "401",
         "message": "Invalid or missing access token.",
@@ -94,7 +95,7 @@ def test_refresh_maps_each_status_to_its_message(post):
         (503, "The service is temporarily unavailable. Please try again later."),
     ]:
         post.return_value = _response(code, {})
-        assert refresh_api_key("token") == {
+        assert refresh_api_key("token", raise_error=False) == {
             "status": "FAILED",
             "code": str(code),
             "message": message,
@@ -103,7 +104,7 @@ def test_refresh_maps_each_status_to_its_message(post):
 
 @patch(POST)
 def test_refresh_without_a_token_is_not_sent(post):
-    assert refresh_api_key("") == {
+    assert refresh_api_key("", raise_error=False) == {
         "status": "FAILED",
         "code": "400",
         "message": "Required fields are missing from the request.",
@@ -113,7 +114,7 @@ def test_refresh_without_a_token_is_not_sent(post):
 
 @patch(POST, side_effect=requests.ConnectionError("down"))
 def test_refresh_reports_a_network_failure(_post):
-    assert refresh_api_key("old-refresh") == {
+    assert refresh_api_key("old-refresh", raise_error=False) == {
         "status": "FAILED",
         "code": "503",
         "message": "The service is temporarily unavailable. Please try again later.",
@@ -122,7 +123,7 @@ def test_refresh_reports_a_network_failure(_post):
 
 @patch(POST)
 def test_an_expired_refresh_token_is_not_sent(post):
-    assert refresh_api_key(_jwt(time.time() - 60)) == {
+    assert refresh_api_key(_jwt(time.time() - 60), raise_error=False) == {
         "status": "FAILED",
         "code": "401",
         "message": "Access token has expired.",
@@ -139,7 +140,7 @@ def test_a_token_expiring_during_the_call_reports_expired(post):
         "willisapi_client.services.auth.api_keys.time.time",
         return_value=time.time() + 7200,
     ):
-        result = refresh_api_key(token)
+        result = refresh_api_key(token, raise_error=False)
 
     assert result["message"] == "Access token has expired."
 
@@ -148,6 +149,30 @@ def test_a_token_expiring_during_the_call_reports_expired(post):
 def test_a_live_token_rejected_by_the_server_is_invalid(post):
     post.return_value = _response(401, {})
 
-    assert refresh_api_key(_jwt(time.time() + 3600))["message"] == (
+    assert refresh_api_key(_jwt(time.time() + 3600), raise_error=False)["message"] == (
         "Invalid or missing access token."
     )
+
+
+@patch("willisapi_client.services.auth.api_keys.requests.post")
+def test_a_failed_refresh_raises_by_default(post):
+    post.return_value = MagicMock(status_code=401)
+    with pytest.raises(WillisException) as raised:
+        refresh_api_key("bad")
+    err = raised.value
+    assert (err.status, err.code, err.records) == ("FAILED", "401", [])
+    assert err.message == "Invalid or missing access token."
+    assert str(err) == "401: Invalid or missing access token."
+
+
+def test_a_missing_token_raises_by_default():
+    with pytest.raises(WillisException) as raised:
+        refresh_api_key("")
+    assert raised.value.code == "400"
+
+
+@patch("willisapi_client.services.auth.api_keys.requests.post")
+def test_a_successful_refresh_returns_even_with_raise_error(post):
+    post.return_value = MagicMock(status_code=200)
+    post.return_value.json.return_value = {"api_key": "k", "refresh_token": "r"}
+    assert refresh_api_key("old")["status"] == "SUCCESS"
