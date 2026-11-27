@@ -3,7 +3,11 @@ import sys
 import pytest
 from unittest.mock import MagicMock, patch
 
-from willisapi_client.services.metadata.coa_upload import COAUploadUtils, coa_upload
+from willisapi_client.services.metadata.coa_upload import (
+    WillisException,
+    COAUploadUtils,
+    coa_upload,
+)
 from willisapi_client.services.metadata.upload import _FileSlice, _put_part_to_s3
 
 # The package re-exports the function ``coa_upload``, which shadows this module
@@ -71,17 +75,24 @@ def write(tmp_path, data):
     return str(path)
 
 
+def failure_of(*args, **kwargs) -> WillisException:
+    """Call ``coa_upload`` and return the ``WillisException`` it must raise."""
+    with pytest.raises(WillisException) as raised:
+        coa_upload(*args, **kwargs)
+    return raised.value
+
+
 class TestCOAUpload:
     def test_unsupported_action(self, tmp_path):
-        res = coa_upload("key", write(tmp_path, odm()), action="rc")
-        assert res["status"] == "FAILED"
-        assert res["code"] == "400"
-        assert res["message"] == "Invalid request. Please check the request payload."
-        assert "Unsupported action" in res["errors"][0]
+        err = failure_of("key", write(tmp_path, odm()), action="rc")
+        assert err.code == "400"
+        assert err.message == "Invalid request. Please check the request payload."
+        assert "Unsupported action" in err.errors[0]
+        assert str(err).startswith("400: Invalid request.")
 
     def test_unreadable_json(self, tmp_path):
-        res = coa_upload("key", str(tmp_path / "missing.json"))
-        assert res["status"] == "FAILED"
+        err = failure_of("key", str(tmp_path / "missing.json"))
+        assert err.code == "400"
 
     def test_all_validation_errors_are_returned_together(self, tmp_path):
         data = odm()
@@ -91,22 +102,22 @@ class TestCOAUpload:
         ][0]
         form.pop("FormLanguage")
         form.pop("Signature")
-        res = coa_upload("key", write(tmp_path, data))
-        assert res["status"] == "FAILED"
-        joined = " ".join(res["errors"])
+        err = failure_of("key", write(tmp_path, data))
+        assert err.code == "400"
+        joined = " ".join(err.errors)
         assert "Location[0] is missing: Name, Number" in joined
         assert "FormLanguage is required" in joined
         assert "Signature.UserRef.UserOID is required" in joined
 
     def test_update_rejects_form_data(self, tmp_path):
-        res = coa_upload("key", write(tmp_path, odm()), action="u")
-        assert any("FormData is not allowed" in e for e in res["errors"])
+        err = failure_of("key", write(tmp_path, odm()), action="u")
+        assert any("FormData is not allowed" in e for e in err.errors)
 
     def test_missing_attachment_file_fails_before_any_request(self, tmp_path):
         data = odm(attachments=[("IT.RECORDING_PATH.0", str(tmp_path / "a.mp4"))])
         with patch.object(MODULE, "archive_metadata_csv") as archive:
-            res = coa_upload("key", write(tmp_path, data))
-        assert any("file not found" in e for e in res["errors"])
+            err = failure_of("key", write(tmp_path, data))
+        assert any("file not found" in e for e in err.errors)
         archive.assert_not_called()
 
     @pytest.mark.parametrize(
@@ -139,13 +150,13 @@ class TestCOAUpload:
             failure.update(status_code=status_code, text=text)
 
         with patch.object(MODULE, "archive_metadata_csv", side_effect=refuse):
-            res = coa_upload("key", write(tmp_path, odm()))
-        assert (res["status"], res["code"], res["message"]) == ("FAILED", code, message)
+            err = failure_of("key", write(tmp_path, odm()))
+        assert (err.code, err.message) == (code, message)
 
     def test_an_archive_failure_without_a_refusal_is_503(self, tmp_path):
         with patch.object(MODULE, "archive_metadata_csv", return_value=None):
-            res = coa_upload("key", write(tmp_path, odm()))
-        assert res["code"] == "503"
+            err = failure_of("key", write(tmp_path, odm()))
+        assert err.code == "503"
 
     @patch.object(MODULE, "_put_file_to_s3", return_value=None)
     @patch.object(MODULE, "build_retry_session")
@@ -198,10 +209,9 @@ class TestCOAUpload:
             "errors": ["record_id: Upload record not found."],
         }
         session.return_value.post.return_value = response
-        res = coa_upload("key", write(tmp_path, odm()))
-        assert res["status"] == "FAILED"
-        assert res["code"] == "400"
-        assert "Upload record not found" in res["errors"][0]
+        err = failure_of("key", write(tmp_path, odm()))
+        assert err.code == "400"
+        assert "Upload record not found" in err.errors[0]
 
     @patch.object(MODULE, "build_retry_session")
     @patch.object(MODULE, "archive_metadata_csv", return_value="rec-1")
@@ -209,9 +219,9 @@ class TestCOAUpload:
         response = MagicMock(status_code=502, text="<html>bad gateway</html>")
         response.json.side_effect = ValueError
         session.return_value.post.return_value = response
-        res = coa_upload("key", write(tmp_path, odm()))
-        assert res["code"] == "503"
-        assert res["message"] == (
+        err = failure_of("key", write(tmp_path, odm()))
+        assert err.code == "503"
+        assert err.message == (
             "The service is temporarily unavailable. Please try again later."
         )
 
@@ -274,13 +284,13 @@ class TestConfirmation:
         self._pending(session, recording, confirmed)
         data = odm(attachments=[("IT.RECORDING_PATH.0", str(recording))])
 
-        res = coa_upload("key", write(tmp_path, data))
+        err = failure_of("key", write(tmp_path, data))
 
         session.return_value.patch.assert_called_once()
-        assert res["status"] == "FAILED"
-        assert res["code"] == "400"
-        assert res["records"][0]["errors"] == ["file was not uploaded"]
-        assert "attachments" not in res
+        assert err.code == "400"
+        assert err.records[0]["errors"] == ["file was not uploaded"]
+        assert "Record 0 FAILED: file was not uploaded" in str(err)
+        assert str(err).startswith("400: Data upload failed.")
 
 
 class TestMultipart:
@@ -417,11 +427,11 @@ class TestMultipart:
         session.return_value.patch.return_value = confirmed
 
         with patch.object(MODULE, "PART_SIZE", 4):
-            res = coa_upload("key", write(tmp_path, data), workers=1)
+            err = failure_of("key", write(tmp_path, data), workers=1)
 
         session.return_value.patch.assert_called_once()
-        assert "attachments" not in res
-        assert res["status"] == "FAILED"
+        assert err.code == "400"
+        assert err.records == [{"status": "FAILED"}]
 
 
 class TestStopAfterFailedPart:
@@ -500,3 +510,98 @@ class TestSameContentFiles:
 
         sent = sorted(c.args[0]["recording"] for c in put.call_args_list)
         assert sent == sorted([str(first), str(second)])
+
+
+class TestRaiseErrorFlag:
+    def test_raise_error_false_returns_the_failure_summary(self, tmp_path):
+        res = coa_upload(
+            "key", write(tmp_path, odm()), action="rc", raise_error=False
+        )
+        assert res["status"] == "FAILED"
+        assert res["code"] == "400"
+        assert res["message"] == "Invalid request. Please check the request payload."
+        assert "Unsupported action" in res["errors"][0]
+        assert res["records"] == []
+
+    def test_raise_error_defaults_to_true(self, tmp_path):
+        with pytest.raises(WillisException):
+            coa_upload("key", write(tmp_path, odm()), action="rc")
+
+    def test_raise_error_false_still_returns_a_2xx_summary(self, tmp_path):
+        with patch.object(MODULE, "_coa_upload", return_value={"status": "SUCCESS"}):
+            res = coa_upload("key", write(tmp_path, odm()), raise_error=False)
+        assert res == {"status": "SUCCESS"}
+
+    @patch.object(MODULE, "_put_file_to_s3", return_value="boom")
+    @patch.object(MODULE, "build_retry_session")
+    @patch.object(MODULE, "archive_metadata_csv", return_value="rec-1")
+    def test_a_failed_upload_keeps_its_records_and_hides_attachments(
+        self, archive, session, put, tmp_path
+    ):
+        recording = tmp_path / "a.mp4"
+        recording.write_bytes(b"audio")
+        post = MagicMock(status_code=202)
+        post.json.return_value = {
+            "status": "PENDING",
+            "code": "202",
+            "message": "m",
+            "session_id": "s-1",
+            "records": [{"status": "PENDING"}],
+            "attachments": [{"checksum": checksum_of(recording), "presigned": "u"}],
+        }
+        confirmed = MagicMock(status_code=400)
+        confirmed.json.return_value = {
+            "status": "FAILED",
+            "code": "400",
+            "message": "Data upload failed.",
+            "records": [{"status": "FAILED", "errors": ["file was not uploaded"]}],
+        }
+        session.return_value.post.return_value = post
+        session.return_value.patch.return_value = confirmed
+        data = odm(attachments=[("IT.RECORDING_PATH.0", str(recording))])
+
+        res = coa_upload("key", write(tmp_path, data), raise_error=False)
+
+        assert res["status"] == "FAILED"
+        assert res["session_id"] == "s-1"
+        assert res["records"][0]["errors"] == ["file was not uploaded"]
+        assert "attachments" not in res
+
+
+class TestWillisExceptionFields:
+    @patch.object(MODULE, "build_retry_session")
+    @patch.object(MODULE, "archive_metadata_csv", return_value="rec-1")
+    def test_exposes_status_code_message_and_records(self, archive, session, tmp_path):
+        body = {
+            "status": "FAILED",
+            "code": "400",
+            "message": "Data upload failed.",
+            "records": [
+                {
+                    "record_id": None,
+                    "StudyOID": "ACM100-09",
+                    "SubjectKey": "MD-LOCAL-1003",
+                    "StudyEventOID": "SE.SCREENING",
+                    "FormOID": "F.MADRS",
+                    "status": "FAILED",
+                    "code": "400",
+                    "message": "Data upload failed.",
+                    "errors": ["Site 'local-ccr' does not exist for this study."],
+                }
+            ],
+            "session_id": "d44448f2",
+        }
+        response = MagicMock(status_code=400)
+        response.json.return_value = dict(body)
+        session.return_value.post.return_value = response
+
+        err = failure_of("key", write(tmp_path, odm()))
+
+        assert err.status == "FAILED"
+        assert err.code == "400"
+        assert err.message == "Data upload failed."
+        assert err.records == body["records"]
+        assert "Site 'local-ccr' does not exist" in str(err)
+        # raise_error=False hands back the same body
+        res = coa_upload("key", write(tmp_path, odm()), raise_error=False)
+        assert res == body

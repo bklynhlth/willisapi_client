@@ -4,6 +4,7 @@ import time
 
 import requests
 
+from willisapi_client.exceptions import WillisException
 from willisapi_client.logging_setup import logger as logger
 from willisapi_client.willisapi_client import WillisapiClient
 
@@ -45,13 +46,26 @@ def _is_expired(token: str) -> bool:
         return False
 
 
-def refresh_api_key(refresh_token: str, env: str = None) -> dict:
+def refresh_api_key(
+    refresh_token: str, env: str = None, raise_error: bool = True
+) -> dict:
     """Swap a refresh token for a new API key and refresh token.
 
-    Returns ``status`` (``SUCCESS`` or ``FAILED``), ``code`` and ``message``,
-    plus the new ``api_key`` and ``refresh_token`` on success. Store both new
-    tokens: the previous API key and refresh token stop working at once.
+    Returns ``status`` (``SUCCESS``), ``code`` and ``message``, plus the new
+    ``api_key`` and ``refresh_token``. Store both new tokens: the previous API
+    key and refresh token stop working at once.
+
+    A failure raises ``WillisException`` (``status``, ``code``, ``message``,
+    ``records``) unless ``raise_error=False``, in which case the failure is
+    returned as ``{status: "FAILED", code, message}``.
     """
+    result = _refresh_api_key(refresh_token, env)
+    if raise_error and result["status"] != "SUCCESS":
+        raise WillisException(result["code"], result["message"], summary=result)
+    return result
+
+
+def _refresh_api_key(refresh_token: str, env: str = None) -> dict:
     if not refresh_token:
         return _failed(400, _MISSING_FIELDS_MESSAGE)
     if _is_expired(refresh_token):

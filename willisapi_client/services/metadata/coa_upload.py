@@ -7,6 +7,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
+from willisapi_client.exceptions import WillisException
 from willisapi_client.logging_setup import logger as logger
 from willisapi_client.services.metadata.archive import archive_metadata_csv
 from willisapi_client.services.metadata.upload import (
@@ -77,28 +78,46 @@ TOKEN_EXPIRED_MESSAGE = "Access token has expired."
 
 
 def _failed(errors=None, code="400", message=None):
-    """A summary in the API's error shape, for failures before/around the call.
+    """A ``WillisException`` for failures before/around the call (``raise`` it).
 
     The message is the standard one for ``code``; ``errors`` says what happened.
     """
-    return {
-        "status": "FAILED",
-        "code": code,
-        "message": message or ERROR_MESSAGES[code],
-        "records": [],
-        "errors": [errors] if isinstance(errors, str) else errors or [],
-    }
+    errors = [errors] if isinstance(errors, str) else errors or []
+    message = message or ERROR_MESSAGES[code]
+    return WillisException(
+        code,
+        message,
+        errors,
+        {
+            "status": "FAILED",
+            "code": code,
+            "message": message,
+            "records": [],
+            "errors": errors,
+        },
+    )
+
+
+def _error_from_body(body: dict, http_status: int):
+    """A ``WillisException`` from the API's own ``{status, code, message, ...}`` body."""
+    body.setdefault("records", [])
+    code = str(body["code"])
+    return WillisException(
+        code if code.isdigit() else http_status,
+        body["message"],
+        body.get("errors"),
+        body,
+    )
 
 
 def _api_error(response):
-    """The API's own ``{status, code, message, errors}`` body, else a 500 summary."""
+    """A ``WillisException`` from the API's error body, else a 500 one (``raise`` it)."""
     try:
         body = response.json()
     except ValueError:
         body = None
     if isinstance(body, dict) and {"status", "code", "message"} <= set(body):
-        body.setdefault("records", [])
-        return body
+        return _error_from_body(body, response.status_code)
     return _failed(
         f"Unexpected response (HTTP {response.status_code}): {response.text}", "500"
     )
@@ -254,20 +273,47 @@ class COAUploadUtils:
 
 
 @measure
-def coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dict:
+def coa_upload(
+    api_key: str,
+    json_path: str,
+    action: str = "c",
+    raise_error: bool = True,
+    **kwargs,
+) -> dict:
+    """Upload COA data (ODM JSON) and its notes/recordings to Willis.
+
+    Returns the API's summary on a 2xx. A 4xx/5xx raises ``WillisException``
+    (``status``, ``code``, ``message``, ``records``) unless
+    ``raise_error=False``, in which case the failure's summary is returned
+    instead: ``{status: "FAILED", code, message, records, errors}``.
+    See ``_coa_upload`` for the details of the upload itself.
+    """
+    try:
+        return _coa_upload(api_key, json_path, action, **kwargs)
+    except WillisException as error:
+        if raise_error:
+            raise
+        return _public(error.summary)
+
+
+def _coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dict:
     """Upload COA data (ODM JSON) and its notes/recordings to Willis.
 
     ``action``: ``c``/``create`` (new data), ``u``/``update`` (participant
     status, visit dates), ``u.ow``/``update.overwrite`` (replace existing data).
-    Returns the API's summary: ``{status, code, message, records: [...]}`` plus
+    Returns the API's summary on a 2xx: ``{status, code, message, records: [...]}`` plus
     ``session_id`` (the upload as a whole); each record has its own ``record_id``.
     A record with files is SUCCESS only once the API has confirmed them in S3; a
     COA whose files are missing is FAILED and must be sent again with ``u.ow``
     (not ``c``).
+
+    Every 4xx/5xx raises ``WillisException`` (``status_code``, ``message``,
+    ``errors``, ``summary``) instead of returning; ``coa_upload`` can turn that
+    back into a returned summary.
     """
     normalized = ACTIONS.get(str(action).strip().lower())
     if normalized is None or normalized not in SUPPORTED_ACTIONS:
-        return _failed(
+        raise _failed(
             f"Unsupported action '{action}'. Supported: c/create, u/update, "
             "u.ow/update.overwrite."
         )
@@ -276,9 +322,9 @@ def coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dic
         with open(json_path) as f:
             data = json.load(f)
     except (OSError, ValueError) as ex:
-        return _failed(f"Could not read '{json_path}' as JSON: {ex}")
+        raise _failed(f"Could not read '{json_path}' as JSON: {ex}")
     if not isinstance(data, dict):
-        return _failed("The JSON file must contain an object.")
+        raise _failed("The JSON file must contain an object.")
 
     utils = COAUploadUtils(data)
     errors = utils.validate(normalized)
@@ -301,7 +347,7 @@ def coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dic
                 checksums[path] = utils.calculate_file_checksum(path)
     if errors:
         logger.error(f'{datetime.now().strftime("%H:%M:%S")}: json check failed')
-        return _failed(errors)
+        raise _failed(errors)
     logger.info(f'{datetime.now().strftime("%H:%M:%S")}: json check passed')
 
     env = kwargs.get("env")
@@ -322,14 +368,14 @@ def coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dic
         text = failure.get("text") or ""
         if failure.get("status_code") == 401 or "AuthenticationFailed" in text:
             expired = "expired" in text.lower()
-            return _failed(
+            raise _failed(
                 "The access token was rejected.",
                 "401",
                 TOKEN_EXPIRED_MESSAGE if expired else None,
             )
         if failure.get("status_code") == 403:
-            return _failed("Not allowed to upload to Willis.", "403")
-        return _failed("Could not upload the JSON to Willis.", "503")
+            raise _failed("Not allowed to upload to Willis.", "403")
+        raise _failed("Could not upload the JSON to Willis.", "503")
 
     wc = WillisapiClient(env=env)
     headers = wc.get_headers()
@@ -351,11 +397,11 @@ def coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dic
         )
         summary = response.json()
     except Exception as ex:
-        return _failed(f"COA upload request failed: {ex}", "503")
-    if response.status_code not in (200, 202, 400) or "records" not in summary:
-        # The API refused the call as a whole (400/401/403/404/500/503); an
-        # all-records-failed 400 carries ``records`` and is handled below.
-        return _api_error(response)
+        raise _failed(f"COA upload request failed: {ex}", "503")
+    if not 200 <= response.status_code < 300 or "records" not in summary:
+        # Any 4xx/5xx (including the 400 an all-records-failed upload returns,
+        # whose body carries ``records``) is raised, never returned.
+        raise _api_error(response)
 
     # Send each file to its presigned URL(s). A multipart file's part URLs are
     # all issued at once; every part and every small file goes through one pool.
@@ -444,9 +490,15 @@ def coa_upload(api_key: str, json_path: str, action: str = "c", **kwargs) -> dic
             )
             result = confirmed.json()
         except Exception as ex:
-            return _failed(f"Could not confirm the uploaded files: {ex}", "503")
-        if confirmed.status_code not in (200, 400) or "records" not in result:
-            return _api_error(confirmed)
+            raise _failed(f"Could not confirm the uploaded files: {ex}", "503")
+        if not 200 <= confirmed.status_code < 300 or "records" not in result:
+            if isinstance(result, dict) and "records" in result:
+                # The 400 a failed upload gets: the whole summary, with the
+                # session and each record's verdict, goes with the exception.
+                for key in ("status", "code", "message", "records"):
+                    summary[key] = result[key]
+                raise _error_from_body(summary, confirmed.status_code)
+            raise _api_error(confirmed)
         for key in ("status", "code", "message", "records"):
             summary[key] = result[key]
     return _public(summary)

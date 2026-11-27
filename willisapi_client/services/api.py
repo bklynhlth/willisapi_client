@@ -9,5 +9,6 @@ from willisapi_client.services.metadata import (
     upload,
     processed_upload,
     coa_upload,
+    WillisException,
 )
 from willisapi_client.services.auth import refresh_api_key
